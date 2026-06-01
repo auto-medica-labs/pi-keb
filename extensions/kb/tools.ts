@@ -3,8 +3,7 @@
  *
  * Registers: kb_read_index, kb_list_concepts, kb_read_concept,
  *            kb_read_summary, kb_write_summary, kb_write_concept,
- *            kb_update_concept, kb_update_index, kb_set_docname,
- *            kb_delete_concept, kb_delete_summary
+ *            kb_update_concept, kb_update_index, kb_set_docname
  *
  * Every tool accepts an optional `workspace` parameter. The LLM receives
  * the workspace name in the prompt and passes it through.
@@ -19,6 +18,24 @@ import { syncSummaryFooters } from "./adapters/filesystem-store";
 import type { FilesystemStore } from "./adapters/filesystem-store";
 import * as fs from "node:fs";
 import * as path from "node:path";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse the existing index.md to extract preserved briefs.
+ * Returns a Map of "summary/foo" | "concept/bar" → brief text.
+ */
+function parseIndexBriefs(indexContent: string): Map<string, string> {
+  const briefs = new Map<string, string>();
+  const pattern = /^- \[\[(summary|concept)\/([^\]]+)\]\] — (.+)$/gm;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(indexContent)) !== null) {
+    briefs.set(`${match[1]}/${match[2]}`, match[3].trim());
+  }
+  return briefs;
+}
 
 export function registerTools(
   pi: ExtensionAPI,
@@ -307,7 +324,9 @@ export function registerTools(
     name: "kb_update_index",
     label: "Update KB Index",
     description:
-      "Rebuild the knowledge base index.md from a COMPLETE list of all pages. Include every existing page, not just new ones.",
+      "Rebuild the knowledge base index.md. Disk is authoritative for what exists — " +
+      "pass entries only for pages you can provide a fresh brief/description for. " +
+      "Pages you omit keep their existing description from the current index.",
     parameters: Type.Object({
       entries: Type.Array(
         Type.Object({
@@ -319,34 +338,47 @@ export function registerTools(
             description: "One-liner description (under 120 chars)",
           }),
         }),
-        { description: "Complete list of ALL pages in the wiki" },
+        { description: "Entries you want to UPDATE with fresh briefs. Omitted pages keep existing briefs." },
       ),
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
     }),
     async execute(_toolCallId, params) {
-      // Ground-truth validation: filter entries against what actually exists
-      // on disk. Any slug the LLM invented that doesn't correspond to a real
-      // file is silently dropped (RFC: deterministic write).
-      const diskSummaries = new Set(store.listSummaries(params.workspace));
-      const diskConcepts = new Set(store.listConcepts(params.workspace));
+      const diskSummarySlugs = store.listSummaries(params.workspace);
+      const diskConceptSlugs = store.listConcepts(params.workspace);
 
-      const validEntries = params.entries.filter((entry) => {
-        if (entry.type === "summary") return diskSummaries.has(entry.slug);
-        return diskConcepts.has(entry.slug);
-      });
+      // Parse existing index to preserve briefs for pages the LLM didn't touch
+      const existingIndex = store.readIndex(params.workspace) ?? "";
+      const preservedBriefs = parseIndexBriefs(existingIndex);
+
+      // Build brief lookup from LLM's entries (advisory, not authoritative)
+      const llmBriefs = new Map<string, string>();
+      for (const entry of params.entries) {
+        llmBriefs.set(`${entry.type}/${entry.slug}`, entry.brief);
+      }
+
+      // Resolve brief for a page: LLM > existing index > placeholder
+      const resolveBrief = (type: string, slug: string, fallback: string): string => {
+        const key = `${type}/${slug}`;
+        return llmBriefs.get(key) ?? preservedBriefs.get(key) ?? fallback;
+      };
 
       const docLines: string[] = [];
       const conceptLines: string[] = [];
 
-      for (const entry of validEntries) {
-        const line = `- [[${entry.type}/${entry.slug}]] — ${entry.brief}`;
-        if (entry.type === "summary") {
-          docLines.push(line);
-        } else {
-          conceptLines.push(line);
-        }
+      for (const slug of diskSummarySlugs) {
+        const brief = resolveBrief("summary", slug, "(summary)");
+        docLines.push(`- [[summary/${slug}]] — ${brief}`);
+      }
+
+      for (const slug of diskConceptSlugs) {
+        const concept = store.readConcept(slug, params.workspace);
+        const sourcesFallback = concept
+          ? `sources: ${concept.sources.join(", ")}`
+          : "(concept)";
+        const brief = resolveBrief("concept", slug, sourcesFallback);
+        conceptLines.push(`- [[concept/${slug}]] — ${brief}`);
       }
 
       const index = [
@@ -362,22 +394,19 @@ export function registerTools(
 
       store.writeIndex(index, params.workspace);
 
-      // Mark all referenced summary docs as fully compiled
+      // Mark all disk summary docs as fully compiled
       const reg = store.readRegistry(params.workspace);
       let markedCount = 0;
       const now = isoNow();
-      for (const entry of validEntries) {
-        if (entry.type === "summary") {
-          const docName = entry.slug;
-          for (const [, regEntry] of Object.entries(reg)) {
-            if (
-              regEntry.docName === docName &&
-              !store.isEntryCompiled(regEntry)
-            ) {
-              regEntry.compiled = true;
-              regEntry.lastCompiledAt = now;
-              markedCount++;
-            }
+      for (const slug of diskSummarySlugs) {
+        for (const [, regEntry] of Object.entries(reg)) {
+          if (
+            regEntry.docName === slug &&
+            !store.isEntryCompiled(regEntry)
+          ) {
+            regEntry.compiled = true;
+            regEntry.lastCompiledAt = now;
+            markedCount++;
           }
         }
       }
@@ -393,82 +422,6 @@ export function registerTools(
           {
             type: "text" as const,
             text: `Index updated: ${docLines.length} documents, ${conceptLines.length} concepts.`,
-          },
-        ],
-        details: {},
-      };
-    },
-  });
-
-  // ── kb_delete_concept ────────────────────────────────────
-  pi.registerTool({
-    name: "kb_delete_concept",
-    label: "Delete KB Concept",
-    description:
-      "Delete a concept page from the knowledge base. Use during /kb-remove when the concept had only the removed document as its source.",
-    parameters: Type.Object({
-      slug: Type.String({ description: "Concept slug to delete" }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
-    }),
-    async execute(_toolCallId, params) {
-      const existed = store.deleteConcept(params.slug, params.workspace);
-      if (existed) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Concept deleted: concepts/${params.slug}.md`,
-            },
-          ],
-          details: {},
-        };
-      }
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Concept "${params.slug}" not found (already deleted or never existed).`,
-          },
-        ],
-        details: {},
-      };
-    },
-  });
-
-  // ── kb_delete_summary ────────────────────────────────────
-  pi.registerTool({
-    name: "kb_delete_summary",
-    label: "Delete KB Summary",
-    description:
-      "Delete a summary page from the knowledge base. Use during /kb-remove.",
-    parameters: Type.Object({
-      docName: Type.String({
-        description: "Document name slug to delete",
-      }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
-    }),
-    async execute(_toolCallId, params) {
-      const existed = store.deleteSummary(params.docName, params.workspace);
-      if (existed) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Summary deleted: summaries/${params.docName}.md`,
-            },
-          ],
-          details: {},
-        };
-      }
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Summary "${params.docName}" not found.`,
           },
         ],
         details: {},
