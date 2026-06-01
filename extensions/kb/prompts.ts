@@ -90,6 +90,8 @@ export function buildCompilePrompt(
     `- Concepts MUST be cross-document synthesis, not single-document regurgitation`,
     `- Be concise. Wiki content should be scannable.`,
     `- Do NOT write footer sections — they are generated automatically.`,
+    `- When referencing a source document in the body, use backtick format:`,
+    `  \`summary/docname\` or \`concept/slug\`, never [[wiki-links]] or [markdown](links).`,
   ].join("\n");
 }
 
@@ -175,6 +177,8 @@ export function buildCompilePromptInline(
     `- Concepts MUST be cross-document synthesis, not single-document regurgitation`,
     `- Be concise. Wiki content should be scannable.`,
     `- Do NOT write footer sections — they are generated automatically.`,
+    `- When referencing a source document in the body, use backtick format:`,
+    `  \`summary/docname\` or \`concept/slug\`, never [[wiki-links]] or [markdown](links).`,
   ].join("\n");
 }
 
@@ -206,6 +210,11 @@ export function buildQueryPrompt(question: string, workspace?: string): string {
     `If the KB does not contain relevant information, say so clearly.`,
     ``,
     `**Question:** ${question}`,
+    ``,
+    `## Formatting rules`,
+    `- Cite every source so the user can verify the answer. Use backtick format: \`summary/docname\` or \`concept/slug\`.`,
+    `- NEVER use [[wiki-links]] or [markdown](links) — the display app cannot render them.`,
+    `- Keep answers concise and scannable.`,
   ].join("\n");
 }
 
