@@ -1,5 +1,5 @@
 /**
- * prompts.ts — Prompt templates for the KB extension.
+ * prompts.ts — Prompt templates for the Knowledge Base extension.
  *
  * These are injected into the pi session via sendUserMessage when a command
  * runs. The LLM uses the kb_* tools to carry out the instructions.
@@ -27,7 +27,7 @@ export function buildCompilePrompt(
     : `**Workspace:** default (no workspace param needed)`;
 
   return [
-    `[kb-compile] Add the following document to the knowledge base.`,
+    `[knowledge-base-compile] Add the following document to the knowledge base.`,
     ``,
     wsContext,
     ``,
@@ -87,6 +87,11 @@ export function buildCompilePrompt(
     `Disk supplies all existing pages — you cannot accidentally drop them.`,
     `Each entry: \`{ type: "summary"|"concept", slug: "...", brief: "one-liner" }\``,
     ``,
+    `### Step 5: Summarize what you did`,
+    `After all writes are complete, output a brief summary of your work.`,
+    `List each page you created or updated using backtick references:`,
+    `\`summary/<docName>\` for summaries, \`concept/<slug>\` for concepts.`,
+    ``,
     `### Formatting rules`,
     `- Concepts MUST be cross-document synthesis, not single-document regurgitation`,
     `- Be concise. Wiki content should be scannable.`,
@@ -112,7 +117,7 @@ export function buildCompilePromptInline(
     : `**Workspace:** default (no workspace param needed)`;
 
   return [
-    `[kb-compile] Add the following inline content to the knowledge base.`,
+    `[knowledge-base-compile] Add the following inline content to the knowledge base.`,
     ``,
     wsContext,
     ``,
@@ -173,6 +178,11 @@ export function buildCompilePromptInline(
     `Disk supplies all existing pages — you cannot accidentally drop them.`,
     `Each entry: \`{ type: "summary"|"concept", slug: "...", brief: "one-liner" }\``,
     ``,
+    `### Step 4: Summarize what you did`,
+    `After all writes are complete, output a brief summary of your work.`,
+    `List each page you created or updated using backtick references:`,
+    `\`summary/<docName>\` for summaries, \`concept/<slug>\` for concepts.`,
+    ``,
     `### Formatting rules`,
     `- Concepts MUST be cross-document synthesis, not single-document regurgitation`,
     `- Be concise. Wiki content should be scannable.`,
@@ -194,7 +204,7 @@ export function buildQueryPrompt(question: string, workspace?: string): string {
     : `**Workspace:** default (no workspace param needed)`;
 
   return [
-    `[kb-query] Answer the following question using ONLY the knowledge base.`,
+    `[knowledge-base-query] Answer the following question using ONLY the knowledge base.`,
     ``,
     wsContext,
     ``,
@@ -203,9 +213,9 @@ export function buildQueryPrompt(question: string, workspace?: string): string {
     `2. Based on the index, identify which summaries are relevant.`,
     `3. Call \`kb_read_summary(docName)\` on the relevant ones.`,
     `4. If deeper detail is needed, call \`kb_read_concept(slug)\` on relevant concepts.`,
-    `5. Synthesize a clear, concise answer grounded in kb content.`,
+    `5. Synthesize a clear, concise answer grounded in knowledge base content.`,
     ``,
-    `If the knowledge bases does not contain relevant information, say so clearly.`,
+    `If the knowledge base does not contain relevant information, say so clearly.`,
     ``,
     `## Formatting rules`,
     `- Cite every source so the user can verify the answer. Use backtick format: \`summary/docname\` or \`concept/slug\`.`,
@@ -251,7 +261,7 @@ export function buildRemovePrompt(
     .join("\n");
 
   return [
-    `[kb-remove-phase-2] The document "${sourceName}" (docName: ${docName}) was removed from the knowledge base.`,
+    `[knowledge-base-remove-phase-2] The document "${sourceName}" (docName: ${docName}) was removed from the knowledge base.`,
     `Phase 1 has already: deleted the summary, updated concept source lists, rebuilt the index, and removed the registry entry.`,
     ``,
     `The following concept pages previously referenced "${sourceName}" and have \`needs_review: true\` in their frontmatter:`,
