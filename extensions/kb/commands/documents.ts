@@ -199,12 +199,12 @@ export function registerDocumentCommands(
     },
   });
 
-  // ── /kb-remove <docName> [-w <workspace>] ────────────────
+  // ── /kb-remove <docName> [-w <workspace>] [-y] ────────────────
   pi.registerCommand("kb-remove", {
     description:
-      "Remove a document from the knowledge base by docName. Use -w <name> for a named workspace.",
+      "Remove a document from the knowledge base by docName. Use -y to skip confirmation. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
-      const { workspace, rest } = parseWorkspaceArgs(args);
+      const { workspace, yes, rest } = parseWorkspaceArgs(args);
 
       if (!store.kbExists(workspace)) {
         const label = workspace
@@ -216,7 +216,7 @@ export function registerDocumentCommands(
 
       if (!rest) {
         ctx.ui.notify(
-          "Usage: /kb-remove <docName> [-w <workspace>]",
+          "Usage: /kb-remove <docName> [-w <workspace>] [-y]",
           "warning",
         );
         return;
@@ -238,6 +238,19 @@ export function registerDocumentCommands(
 
       const [hash, entry] = matches[0];
       const wsLabel = workspace ? ` [${workspace}]` : "";
+
+      // Confirmation (bypassed with -y)
+      if (!yes) {
+        const confirmed = await ctx.ui.confirm(
+          "Remove document",
+          `Are you sure you want to remove "${entry.name}" (${docName})${wsLabel}?\n\nThis will delete the summary, remove it from all concepts, and delete the source file. This cannot be undone.`,
+        );
+        if (!confirmed) {
+          ctx.ui.notify(`Remove cancelled${wsLabel}: ${entry.name}`, "info");
+          return;
+        }
+      }
+
       ctx.ui.notify(`Removing${wsLabel}: ${entry.name} (${docName})`, "info");
 
       // ═══════════════════════════════════════════════════════

@@ -17,9 +17,10 @@ pi install git:github.com/dheerapat/pi-kb
 /kb-query <question>      Ask a question against the knowledge base
 /kb-list                  List all documents and concepts
 /kb-status                Show knowledge base stats
-/kb-remove <docName>      Remove a document and clean up wiki pages
+/kb-remove <docName> [-y] Remove a document and clean up wiki pages; -y skips confirmation
 /kb-repair [docName]      Re-compile interrupted /kb-add documents
-/kb-ws-rm <name>          Delete a workspace (confirmation required)
+/kb-clear [-y] <name>     Clear workspace content (keeps directory); -y skips confirmation
+/kb-ws-rm [-y] <name>     Delete a workspace; -y skips confirmation
 /kb-workspaces            List all workspaces and their stats
 ```
 
@@ -68,6 +69,11 @@ synchronously so the KB is always internally consistent. If Phase 2 (LLM cleanup
 is interrupted, affected concepts keep a `needs_review: true` flag that can be
 cleared by re-running the removal or manually updating the concept.
 
+**Confirmation bypass:** `/kb-remove`, `/kb-clear`, and `/kb-ws-rm` each show a
+confirmation dialog before destructive operations. Pass `-y` (`--yes`) to skip
+this dialog: `/kb-remove -y my-doc`, `/kb-clear -y myproject`. Useful in
+headless/automated contexts.
+
 ### Workspaces
 
 Create isolated knowledge bases for different projects:
@@ -87,9 +93,10 @@ To delete a workspace and all its data:
 /kb-ws-rm default         # Clears the default workspace (keeps named workspaces)
 ```
 
-A confirmation dialog is shown before anything is removed. Deleting the default
-workspace (`/kb-ws-rm default`) clears its sources, summaries, concepts, and
-index but preserves any named workspaces under `workspaces/`.
+A confirmation dialog is shown before anything is removed (bypass with `-y`).
+Deleting the default workspace (`/kb-ws-rm default`) clears its sources,
+summaries, concepts, and index but preserves any named workspaces under
+`workspaces/`.
 
 ## How it works
 
@@ -266,3 +273,88 @@ From there, commit whenever you add documents, push to a private remote to back 
 ## Requirements
 
 - pi coding agent
+
+## Headless execution (RPC mode)
+
+pi-kb commands are designed for **interactive** use in pi's TUI — the
+terminal interface where `ctx.ui.confirm()` pops up a dialog and
+`ctx.ui.notify()` renders inline status messages. When pi runs in
+**headless RPC mode** (as the Keb bridge does), these UI interactions
+translate to the [extension UI protocol][rpc] over stdin/stdout and have
+important limitations.
+
+### How headless mode differs
+
+| Feature | Interactive (TUI) | Headless (RPC) |
+| --- | --- | --- |
+| `ctx.ui.confirm()` | Dialog in terminal, user responds | Emits `extension_ui_request`, **blocks** waiting for stdin response |
+| `ctx.ui.notify()` | Inline status in terminal | Emits `extension_ui_request` (fire-and-forget) |
+| Interrupted compilation | User can `/kb-repair` from session | Bridge detects `compiled: false` in registry, re-compiles |
+| Session persistence | Full session saved, resumable | `--no-session` — ephemeral, no resume |
+
+### Confirmation dialogs will hang
+
+Several commands call `ctx.ui.confirm()` to ask the user a question
+before proceeding. In RPC/headless mode, pi emits an
+`extension_ui_request` event on stdout and **blocks indefinitely**
+waiting for an `extension_ui_response` on stdin. If the headless
+consumer (e.g. Keb bridge) does not send a response, pi hangs forever.
+
+Commands that use confirmation dialogs:
+
+- `/kb-add` — when a pending compilation exists and `-f` is not passed
+- `/kb-add-content` — same guard, asks to discard pending before adding new
+- `/kb-remove` — confirms before deleting (bypass with `-y`)
+- `/kb-clear` — confirms before clearing workspace (bypass with `-y`)
+- `/kb-ws-rm` — confirms before deleting workspace (bypass with `-y`)
+
+Commands that are **safe** in headless mode (no confirmation dialogs):
+
+- `/kb-init` — creates workspace, synchronous fs write only
+- `/kb-repair` — recompiles pending docs, no confirms
+- `/kb-list`, `/kb-status`, `/kb-workspaces` — read-only, no confirms
+- `/kb-query` — sends LLM prompt, no confirms
+
+### Required contract for headless consumers
+
+To avoid hangs, headless consumers **must**:
+
+1. **Always pass `-f` (force)** on `/kb-add` and `/kb-add-content`.
+   This skips the "discard pending?" confirmation. The Keb bridge does
+   this in `src/handlers/command-handler.js` and
+   `src/handlers/add-content-handler.js`.
+
+2. **Pass `-y` (yes) to bypass confirmations** on `/kb-remove`,
+   `/kb-clear`, and `/kb-ws-rm`. Without `-y`, these commands block
+   waiting for a confirm response on stdin. With `-y`, they proceed
+   immediately (same as `-f` for `/kb-add`). Keb bridge does not use
+   these commands, but if a consumer needs them, always pass `-y`.
+
+3. **Treat `extension_ui_request` events as optional**. The
+   fire-and-forget ones (`notify`, `setStatus`, etc.) can be silently
+   ignored. Dialog ones (`confirm`, `select`, etc.) should never be
+   received if the consumer follows rules 1 and 2.
+
+### Notification loss
+
+`ctx.ui.notify()` calls in headless mode emit `extension_ui_request`
+with `method: "notify"`. The Keb bridge forwards these as generic
+WebSocket events, but the Chrome extension client does not render them.
+This means informational messages like "Fetching: <url>" or "Added:
+<filename>" are invisible to the end user in the side panel.
+
+This is an intentional design choice: the Chrome extension aims for
+simplicity and does not replicate pi's full TUI. Consumers who want
+rich status reporting can listen for `extension_ui_request` events
+and render them themselves.
+
+### Design rationale
+
+pi-kb is an interactive-first extension. Confirmation dialogs and
+notifications are essential to its normal UX. Rather than maintaining
+two code paths (headless vs interactive), pi-kb keeps one code path
+and documents the contract for headless consumers. The Keb bridge
+honors this contract by always passing `-f` and avoiding
+dialog-triggering commands.
+
+[rpc]: https://github.com/earendil-works/pi-coding-agent/blob/main/docs/rpc.md

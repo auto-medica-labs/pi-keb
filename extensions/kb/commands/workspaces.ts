@@ -6,7 +6,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { KnowledgeBaseStore } from "../ports/types";
-import { slugify } from "../utils";
+import { slugify, parseWorkspaceArgs } from "../utils";
 
 export function registerWorkspaceCommands(
   pi: ExtensionAPI,
@@ -109,8 +109,8 @@ export function registerWorkspaceCommands(
       "while keeping the workspace directory. Works for both default and named " +
       "workspaces. Pass -y to skip confirmation.",
     handler: async (args, ctx) => {
-      const raw = (args ?? "").trim();
-      if (!raw) {
+      const { yes, rest: outerName } = parseWorkspaceArgs(args ?? "");
+      if (!outerName) {
         ctx.ui.notify(
           "Usage: /kb-clear [-y] <workspace-name>\n\n" +
             "Clears all wiki content but keeps the workspace directory.\n" +
@@ -119,27 +119,6 @@ export function registerWorkspaceCommands(
             "  /kb-clear default\n" +
             "  /kb-clear myproject\n" +
             "  /kb-clear -y default   # skip confirmation",
-          "warning",
-        );
-        return;
-      }
-
-      // Parse -y flag
-      let skipConfirm = false;
-      let outerName = raw;
-      const yPrefix = outerName.match(/^-y\s+/);
-      const ySuffix = outerName.match(/\s+-y$/);
-      if (yPrefix) {
-        skipConfirm = true;
-        outerName = outerName.slice(yPrefix[0].length).trim();
-      } else if (ySuffix) {
-        skipConfirm = true;
-        outerName = outerName.slice(0, ySuffix.index).trim();
-      }
-
-      if (!outerName) {
-        ctx.ui.notify(
-          "Usage: /kb-clear [-y] <workspace-name>",
           "warning",
         );
         return;
@@ -164,7 +143,7 @@ export function registerWorkspaceCommands(
           ? "the default workspace"
           : `workspace "${outerName}"`;
 
-      if (!skipConfirm) {
+      if (!yes) {
         const confirmed = await ctx.ui.confirm(
           "Clear workspace?",
           `Are you sure you want to clear ${label}?\n` +
@@ -199,9 +178,9 @@ export function registerWorkspaceCommands(
       "Does not support the default workspace — use /kb-clear default instead. " +
       "Pass -y to skip confirmation.",
     handler: async (args, ctx) => {
-      const raw = (args ?? "").trim();
+      const { yes, rest: name } = parseWorkspaceArgs(args ?? "");
 
-      if (!raw) {
+      if (!name) {
         ctx.ui.notify(
           "Usage: /kb-ws-rm [-y] <workspace-name>\n\n" +
             "Deletes the entire named workspace folder.\n" +
@@ -209,27 +188,6 @@ export function registerWorkspaceCommands(
             "Examples:\n" +
             "  /kb-ws-rm myproject\n" +
             "  /kb-ws-rm -y myproject   # skip confirmation",
-          "warning",
-        );
-        return;
-      }
-
-      // Parse -y flag
-      let skipConfirm = false;
-      let name = raw;
-      const yPrefix = name.match(/^-y\s+/);
-      const ySuffix = name.match(/\s+-y$/);
-      if (yPrefix) {
-        skipConfirm = true;
-        name = name.slice(yPrefix[0].length).trim();
-      } else if (ySuffix) {
-        skipConfirm = true;
-        name = name.slice(0, ySuffix.index).trim();
-      }
-
-      if (!name) {
-        ctx.ui.notify(
-          "Usage: /kb-ws-rm [-y] <workspace-name>",
           "warning",
         );
         return;
@@ -252,7 +210,7 @@ export function registerWorkspaceCommands(
         return;
       }
 
-      if (!skipConfirm) {
+      if (!yes) {
         const confirmed = await ctx.ui.confirm(
           "Delete workspace?",
           `Are you sure you want to delete workspace "${name}"?\n` +
