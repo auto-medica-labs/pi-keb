@@ -166,7 +166,7 @@ describe("updateConcept (deterministic source merge)", () => {
   beforeEach(() => { store = setup(); });
   afterEach(() => teardown());
 
-  // Simulates what kb_update_concept does:
+  // Simulates what keb_update_concept does:
   function updateConcept(
     slug: string,
     body: string,
@@ -278,7 +278,7 @@ describe("syncSummaryFooters (post-compile deterministic sync)", () => {
       "test-ws",
     );
 
-    // Sync footers (simulates what kb_update_index does)
+    // Sync footers (simulates what keb_update_index does)
     syncSummaryFooters(store, "test-ws");
 
     // doc-a footer should now reflect concept sources

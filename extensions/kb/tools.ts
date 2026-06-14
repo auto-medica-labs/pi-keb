@@ -1,9 +1,9 @@
 /**
  * tools.ts — LLM-callable tools for the KB extension.
  *
- * Registers: kb_read_index, kb_list_concepts, kb_read_concept,
- *            kb_read_summary, kb_write_summary, kb_write_concept,
- *            kb_update_concept, kb_update_index, kb_set_docname
+ * Registers: keb_read_index, keb_list_concepts, keb_read_concept,
+ *            keb_read_summary, keb_write_summary, keb_write_concept,
+ *            keb_update_concept, keb_update_index, keb_set_docname
  *
  * Every tool accepts an optional `workspace` parameter. The LLM receives
  * the workspace name in the prompt and passes it through.
@@ -41,9 +41,9 @@ export function registerTools(
   pi: ExtensionAPI,
   store: KnowledgeBaseStore,
 ) {
-  // ── kb_read_index ────────────────────────────────────────
+  // ── keb_read_index ────────────────────────────────────────
   pi.registerTool({
-    name: "kb_read_index",
+    name: "keb_read_index",
     label: "Read KB Index",
     description:
       "Read the knowledge base index.md file. Shows all documents and concepts with brief descriptions.",
@@ -63,9 +63,9 @@ export function registerTools(
     },
   });
 
-  // ── kb_list_concepts ─────────────────────────────────────
+  // ── keb_list_concepts ─────────────────────────────────────
   pi.registerTool({
-    name: "kb_list_concepts",
+    name: "keb_list_concepts",
     label: "List KB Concepts",
     description: "List all concept slugs in the knowledge base.",
     parameters: Type.Object({
@@ -86,9 +86,9 @@ export function registerTools(
     },
   });
 
-  // ── kb_read_concept ──────────────────────────────────────
+  // ── keb_read_concept ──────────────────────────────────────
   pi.registerTool({
-    name: "kb_read_concept",
+    name: "keb_read_concept",
     label: "Read KB Concept",
     description: "Read the full content of a concept page by its slug.",
     parameters: Type.Object({
@@ -123,9 +123,9 @@ export function registerTools(
     },
   });
 
-  // ── kb_read_summary ──────────────────────────────────────
+  // ── keb_read_summary ──────────────────────────────────────
   pi.registerTool({
-    name: "kb_read_summary",
+    name: "keb_read_summary",
     label: "Read KB Summary",
     description: "Read the full content of a summary page by docName.",
     parameters: Type.Object({
@@ -161,9 +161,9 @@ export function registerTools(
     },
   });
 
-  // ── kb_write_summary ─────────────────────────────────────
+  // ── keb_write_summary ─────────────────────────────────────
   pi.registerTool({
-    name: "kb_write_summary",
+    name: "keb_write_summary",
     label: "Write KB Summary",
     description:
       "Create or overwrite a summary page for a document. Use the docName passed to you in the compile instructions.",
@@ -179,13 +179,13 @@ export function registerTools(
       ),
     }),
     async execute(_toolCallId, params) {
-      // Guard: reject temporary inline-* docNames — LLM must call kb_set_docname first
+      // Guard: reject temporary inline-* docNames — LLM must call keb_set_docname first
       if (params.docName.startsWith("inline-")) {
         return {
           content: [
             {
               type: "text" as const,
-              text: `"${params.docName}" is a temporary auto-generated name. Call kb_set_docname first to choose a meaningful slug, then use that name in kb_write_summary.`,
+              text: `"${params.docName}" is a temporary auto-generated name. Call keb_set_docname first to choose a meaningful slug, then use that name in keb_write_summary.`,
             },
           ],
           details: {},
@@ -219,12 +219,12 @@ export function registerTools(
     },
   });
 
-  // ── kb_write_concept ─────────────────────────────────────
+  // ── keb_write_concept ─────────────────────────────────────
   pi.registerTool({
-    name: "kb_write_concept",
+    name: "keb_write_concept",
     label: "Write KB Concept",
     description:
-      "Create a NEW concept page. Use kb_update_concept to add sources to an existing concept.",
+      "Create a NEW concept page. Use keb_update_concept to add sources to an existing concept.",
     parameters: Type.Object({
       slug: Type.String({
         description: "Concept slug (lowercase, hyphens, e.g. 'caching-strategy')",
@@ -262,9 +262,9 @@ export function registerTools(
     },
   });
 
-  // ── kb_update_concept ───────────────────────────────────
+  // ── keb_update_concept ───────────────────────────────────
   pi.registerTool({
-    name: "kb_update_concept",
+    name: "keb_update_concept",
     label: "Update KB Concept",
     description:
       "Update an EXISTING concept with new information from a document. " +
@@ -291,7 +291,7 @@ export function registerTools(
           content: [
             {
               type: "text" as const,
-              text: `Concept "${params.slug}" does not exist. Use kb_write_concept to create it first.`,
+              text: `Concept "${params.slug}" does not exist. Use keb_write_concept to create it first.`,
             },
           ],
           details: {},
@@ -319,9 +319,9 @@ export function registerTools(
     },
   });
 
-  // ── kb_update_index ──────────────────────────────────────
+  // ── keb_update_index ──────────────────────────────────────
   pi.registerTool({
-    name: "kb_update_index",
+    name: "keb_update_index",
     label: "Update KB Index",
     description:
       "Rebuild the knowledge base index.md. Disk is authoritative for what exists — " +
@@ -429,12 +429,12 @@ export function registerTools(
     },
   });
 
-  // ── kb_set_docname ─────────────────────────────────────
+  // ── keb_set_docname ─────────────────────────────────────
   pi.registerTool({
-    name: "kb_set_docname",
+    name: "keb_set_docname",
     label: "Set KB DocName",
     description:
-      "Rename an inline document's temporary docName to a meaningful slug. Use during /kb-add-content compilation to pick a proper name.",
+      "Rename an inline document's temporary docName to a meaningful slug. Use during /keb:add:content compilation to pick a proper name.",
     parameters: Type.Object({
       oldDocName: Type.String({
         description: "Current temporary docName (e.g. 'inline-a1b2c3d4')",

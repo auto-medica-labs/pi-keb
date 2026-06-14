@@ -129,7 +129,7 @@ describe("parseWorkspaceArgs", () => {
     assert.equal(result.rest, "@file1.md https://example.com");
   });
 
-  it("handles real-world kb-remove usage", () => {
+  it("handles real-world keb:remove usage", () => {
     const a = parseWorkspaceArgs("my-doc -w dev -y");
     assert.equal(a.yes, true);
     assert.equal(a.workspace, "dev");
@@ -140,7 +140,7 @@ describe("parseWorkspaceArgs", () => {
     assert.equal(b.rest, "some-slug");
   });
 
-  it("handles real-world kb-clear usage", () => {
+  it("handles real-world keb:workspace:clear usage", () => {
     const result = parseWorkspaceArgs("-y default");
     assert.equal(result.yes, true);
     assert.equal(result.rest, "default");

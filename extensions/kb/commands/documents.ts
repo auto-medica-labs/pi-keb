@@ -1,7 +1,7 @@
 /**
  * commands/documents.ts — Document lifecycle commands.
  *
- * Registers: /kb-add, /kb-remove, /kb-repair
+ * Registers: /keb:add, /keb:add:content, /keb:remove, /keb:repair
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -32,14 +32,14 @@ export function registerDocumentCommands(
 ) {
   const { store, fetcher } = deps;
 
-  // ── /kb-add <@file | url> [-w <workspace>] ─────────────
-  pi.registerCommand("kb-add", {
+  // ── /keb:add <@file | url> [-w <workspace>] ─────────────
+  pi.registerCommand("keb:add", {
     description:
       "Add markdown files (via @) or URLs to the knowledge base. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       if (!args || !args.trim()) {
         ctx.ui.notify(
-          "Usage: /kb-add @file.md | <url> [-w <workspace>]",
+          "Usage: /keb:add @file.md | <url> [-w <workspace>]",
           "warning",
         );
         return;
@@ -83,14 +83,14 @@ export function registerDocumentCommands(
     },
   });
 
-  // ── /kb-add-content <text> [-w <workspace>] [-f] ────────
-  pi.registerCommand("kb-add-content", {
+  // ── /keb:add:content <text> [-w <workspace>] [-f] ────────
+  pi.registerCommand("keb:add:content", {
     description:
       "Add inline text content to the knowledge base. The LLM will choose a docName. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       if (!args || !args.trim()) {
         ctx.ui.notify(
-          "Usage: /kb-add-content <markdown text> [-w <workspace>] [-f]",
+          "Usage: /keb:add:content <markdown text> [-w <workspace>] [-f]",
           "warning",
         );
         return;
@@ -100,7 +100,7 @@ export function registerDocumentCommands(
 
       if (!rest || rest.trim().length === 0) {
         ctx.ui.notify(
-          "No content provided. Usage: /kb-add-content <markdown text> [-w <workspace>] [-f]",
+          "No content provided. Usage: /keb:add:content <markdown text> [-w <workspace>] [-f]",
           "warning",
         );
         return;
@@ -142,11 +142,11 @@ export function registerDocumentCommands(
         if (!force) {
           const discard = await ctx.ui.confirm(
             "Pending compilation",
-            `"${pendingName}" is pending compilation. Discard it to add inline content instead?\n\nUse /kb-repair to finish the pending document without losing it.`,
+            `"${pendingName}" is pending compilation. Discard it to add inline content instead?\n\nUse /keb:repair to finish the pending document without losing it.`,
           );
           if (!discard) {
             ctx.ui.notify(
-              `Add blocked${wsLabel}: "${pendingName}" is still pending. Use /kb-repair to finish it.`,
+              `Add blocked${wsLabel}: "${pendingName}" is still pending. Use /keb:repair to finish it.`,
               "warning",
             );
             return;
@@ -199,8 +199,8 @@ export function registerDocumentCommands(
     },
   });
 
-  // ── /kb-remove <docName> [-w <workspace>] [-y] ────────────────
-  pi.registerCommand("kb-remove", {
+  // ── /keb:remove <docName> [-w <workspace>] [-y] ────────────────
+  pi.registerCommand("keb:remove", {
     description:
       "Remove a document from the knowledge base by docName. Use -y to skip confirmation. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
@@ -216,7 +216,7 @@ export function registerDocumentCommands(
 
       if (!rest) {
         ctx.ui.notify(
-          "Usage: /kb-remove <docName> [-w <workspace>] [-y]",
+          "Usage: /keb:remove <docName> [-w <workspace>] [-y]",
           "warning",
         );
         return;
@@ -230,7 +230,7 @@ export function registerDocumentCommands(
 
       if (matches.length === 0) {
         ctx.ui.notify(
-          `No document with slug "${docName}" found. Use /kb-list to see available docs.`,
+          `No document with slug "${docName}" found. Use /keb:list to see available docs.`,
           "error",
         );
         return;
@@ -331,8 +331,8 @@ export function registerDocumentCommands(
     },
   });
 
-  // ── /kb-repair [docName] [-w <workspace>] ────────────────
-  pi.registerCommand("kb-repair", {
+  // ── /keb:repair [docName] [-w <workspace>] ────────────────
+  pi.registerCommand("keb:repair", {
     description:
       "Detect and re-compile documents whose compilation was interrupted. " +
       "Pass a docName to repair a specific document. Use -w <name> for a named workspace.",
@@ -456,11 +456,11 @@ async function handleUrlAdd(
     if (!force) {
       const discard = await ctx.ui.confirm(
         "Pending compilation",
-        `"${pendingName}" is pending compilation. Discard it to add "${fp}" instead?\n\nUse /kb-repair to finish the pending document without losing it.`,
+        `"${pendingName}" is pending compilation. Discard it to add "${fp}" instead?\n\nUse /keb:repair to finish the pending document without losing it.`,
       );
       if (!discard) {
         ctx.ui.notify(
-          `Add blocked${wsLabel}: "${pendingName}" is still pending. Use /kb-repair to finish it.`,
+          `Add blocked${wsLabel}: "${pendingName}" is still pending. Use /keb:repair to finish it.`,
           "warning",
         );
         return;
@@ -583,11 +583,11 @@ async function handleFileAdd(
     if (!force) {
       const discard = await ctx.ui.confirm(
         "Pending compilation",
-        `"${pendingName}" is pending compilation. Discard it to add "${path.basename(absPath)}" instead?\n\nUse /kb-repair to finish the pending document without losing it.`,
+        `"${pendingName}" is pending compilation. Discard it to add "${path.basename(absPath)}" instead?\n\nUse /keb:repair to finish the pending document without losing it.`,
       );
       if (!discard) {
         ctx.ui.notify(
-          `Add blocked${wsLabel}: "${pendingName}" is still pending. Use /kb-repair to finish it.`,
+          `Add blocked${wsLabel}: "${pendingName}" is still pending. Use /keb:repair to finish it.`,
           "warning",
         );
         return;
