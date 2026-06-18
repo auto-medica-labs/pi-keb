@@ -79,8 +79,8 @@ export interface KnowledgeBaseStore {
   // ── Workspaces ───────────────────────────────────────
   listWorkspaces(): string[];
   workspaceExists(name: string): boolean;
-  ensureKbDir(workspace?: string): boolean;
-  kbExists(workspace?: string): boolean;
+  ensureKebDir(workspace?: string): boolean;
+  kebExists(workspace?: string): boolean;
   deleteWorkspace(name?: string): string;
   clearWorkspace(name?: string): string;
 

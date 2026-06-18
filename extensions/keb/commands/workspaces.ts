@@ -44,7 +44,7 @@ export function registerWorkspaceCommands(
         return;
       }
 
-      store.ensureKbDir(name);
+      store.ensureKebDir(name);
       ctx.ui.notify(
         `Workspace created: ${name}\n` +
           `  Path: ${store.getWorkspaceRoot(name).root}\n\n` +
@@ -64,7 +64,7 @@ export function registerWorkspaceCommands(
       const lines: string[] = ["## Workspaces", ""];
 
       // Default workspace
-      const defExists = store.kbExists();
+      const defExists = store.kebExists();
       if (defExists) {
         const defSummaries = store.listSummaries();
         const defConcepts = store.listConcepts();

@@ -155,7 +155,7 @@ export function registerDocumentCommands(
         discardPendingEntry(workspace, store, ctx);
       }
 
-      store.ensureKbDir(workspace);
+      store.ensureKebDir(workspace);
 
       // Resolve doc-name collision (should be rare with inline- prefix but handle it)
       const finalDocName = resolveDocNameCollision(
@@ -206,7 +206,7 @@ export function registerDocumentCommands(
     handler: async (args, ctx) => {
       const { workspace, yes, rest } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
@@ -339,7 +339,7 @@ export function registerDocumentCommands(
     handler: async (args, ctx) => {
       const { workspace, rest } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
@@ -469,7 +469,7 @@ async function handleUrlAdd(
     discardPendingEntry(workspace, store, ctx);
   }
 
-  store.ensureKbDir(workspace);
+  store.ensureKebDir(workspace);
 
   // Fetch & convert
   let converted: { content: string; title: string | null };
@@ -552,7 +552,7 @@ async function handleFileAdd(
   }
 
   const fileHash = store.hashFile(absPath);
-  store.ensureKbDir(workspace);
+  store.ensureKebDir(workspace);
 
   // Dedup by hash
   if (Object.keys(store.readRegistry(workspace)).includes(fileHash)) {

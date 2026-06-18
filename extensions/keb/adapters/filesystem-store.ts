@@ -60,11 +60,11 @@ export class FilesystemStore implements KnowledgeBaseStore {
   }
 
   workspaceExists(name: string): boolean {
-    if (!name || name === "default") return this.kbExists();
+    if (!name || name === "default") return this.kebExists();
     return fs.existsSync(path.join(WORKSPACES_DIR, name));
   }
 
-  ensureKbDir(workspace?: string): boolean {
+  ensureKebDir(workspace?: string): boolean {
     const wp = this.getWorkspaceRoot(workspace);
     const isNew = !fs.existsSync(wp.root);
 
@@ -86,7 +86,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     return isNew;
   }
 
-  kbExists(workspace?: string): boolean {
+  kebExists(workspace?: string): boolean {
     const wp = this.getWorkspaceRoot(workspace);
     return fs.existsSync(wp.root);
   }

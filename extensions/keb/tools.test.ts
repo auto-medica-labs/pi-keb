@@ -52,7 +52,7 @@ function wsDir(): string {
 
 function setup() {
   const store = new FilesystemStore();
-  store.ensureKbDir("test-ws");
+  store.ensureKebDir("test-ws");
   return store;
 }
 

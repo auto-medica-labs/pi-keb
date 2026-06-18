@@ -20,7 +20,7 @@ export function registerQueryCommands(
     handler: async (args, ctx) => {
       const { workspace, rest } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
@@ -50,7 +50,7 @@ export function registerQueryCommands(
     handler: async (args, ctx) => {
       const { workspace } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
@@ -107,7 +107,7 @@ export function registerQueryCommands(
     handler: async (args, ctx) => {
       const { workspace } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
