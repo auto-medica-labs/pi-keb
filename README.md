@@ -65,7 +65,7 @@ them with `⚠[pending]`.
 Re-adding the same file also triggers automatic recovery.
 
 **Removal recovery:** If a `/keb:remove` session is interrupted, Phase 1 completes
-synchronously so the KEB is always internally consistent. If Phase 2 (LLM cleanup)
+synchronously so the Keb is always internally consistent. If Phase 2 (LLM cleanup)
 is interrupted, affected concepts keep a `needs_review: true` flag that can be
 cleared by re-running the removal or manually updating the concept.
 
@@ -147,7 +147,7 @@ Removal uses a **two-phase staged pipeline**. Phase 1 is entirely deterministic 
 
 - Only runs if concepts were affected
 - The LLM reads each concept flagged `needs_review: true`, surgically removes content traceable to the deleted document, and writes back with `needs_review: false`
-- If the session is interrupted during Phase 2, the KEB remains valid — concepts just have `needs_review: true` flags that can be resolved later with a re-run
+- If the session is interrupted during Phase 2, the Keb remains valid — concepts just have `needs_review: true` flags that can be resolved later with a re-run
 
 ### File format
 
@@ -195,7 +195,7 @@ needs_review: false
 
 **Compilation interrupted:** If a `/keb:add` session is interrupted mid-compilation, the registry keeps `compiled: false`. `/keb:status` shows a `⚠ Pending compilation` line. Run `/keb:repair` to resume.
 
-**Removal interrupted:** If a `/keb:remove` session is interrupted after Phase 1 (which completes synchronously), the KEB is already consistent. If interrupted during Phase 2, concepts retain `needs_review: true` flags. Re-running `/keb:remove` for the same document or manually calling `keb_write_concept` on the affected concepts clears the flag.
+**Removal interrupted:** If a `/keb:remove` session is interrupted after Phase 1 (which completes synchronously), the Keb is already consistent. If interrupted during Phase 2, concepts retain `needs_review: true` flags. Re-running `/keb:remove` for the same document or manually calling `keb_write_concept` on the affected concepts clears the flag.
 
 ### Failure modes — before vs after
 
@@ -212,7 +212,7 @@ needs_review: false
 ├── registry.json         # Hash-based dedup tracking
 ├── source/               # Original file copies
 ├── wiki/
-│   ├── index.md          # KEB overview with one-liner entries
+│   ├── index.md          # Keb overview with one-liner entries
 │   ├── summaries/        # Per-document summaries
 │   └── concepts/         # Cross-document topic synthesis
 └── workspaces/           # Named, isolated workspaces
@@ -256,7 +256,7 @@ Cross-reference documents across workspaces by switching between them:
 /keb:query -w backend "how does this repo handle errors?"
 ```
 
-## Version controlling your KEB
+## Version controlling your Keb
 
 The `~/.pi/agent/keb/` folder is plain files — `registry.json` and markdown — so it's easy to track with Git if you want history, backups, or to sync across machines.
 

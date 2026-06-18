@@ -1,5 +1,5 @@
 /**
- * tools.ts — LLM-callable tools for the KEB extension.
+ * tools.ts — LLM-callable tools for the Keb extension.
  *
  * Registers: keb_read_index, keb_list_concepts, keb_read_concept,
  *            keb_read_summary, keb_write_summary, keb_write_concept,
@@ -44,7 +44,7 @@ export function registerTools(
   // ── keb_read_index ────────────────────────────────────────
   pi.registerTool({
     name: "keb_read_index",
-    label: "Read KEB Index",
+    label: "Read Keb Index",
     description:
       "Read the knowledge base index.md file. Shows all documents and concepts with brief descriptions.",
     parameters: Type.Object({
@@ -66,7 +66,7 @@ export function registerTools(
   // ── keb_list_concepts ─────────────────────────────────────
   pi.registerTool({
     name: "keb_list_concepts",
-    label: "List KEB Concepts",
+    label: "List Keb Concepts",
     description: "List all concept slugs in the knowledge base.",
     parameters: Type.Object({
       workspace: Type.Optional(
@@ -89,7 +89,7 @@ export function registerTools(
   // ── keb_read_concept ──────────────────────────────────────
   pi.registerTool({
     name: "keb_read_concept",
-    label: "Read KEB Concept",
+    label: "Read Keb Concept",
     description: "Read the full content of a concept page by its slug.",
     parameters: Type.Object({
       slug: Type.String({
@@ -126,7 +126,7 @@ export function registerTools(
   // ── keb_read_summary ──────────────────────────────────────
   pi.registerTool({
     name: "keb_read_summary",
-    label: "Read KEB Summary",
+    label: "Read Keb Summary",
     description: "Read the full content of a summary page by docName.",
     parameters: Type.Object({
       docName: Type.String({
@@ -164,7 +164,7 @@ export function registerTools(
   // ── keb_write_summary ─────────────────────────────────────
   pi.registerTool({
     name: "keb_write_summary",
-    label: "Write KEB Summary",
+    label: "Write Keb Summary",
     description:
       "Create or overwrite a summary page for a document. Use the docName passed to you in the compile instructions.",
     parameters: Type.Object({
@@ -222,7 +222,7 @@ export function registerTools(
   // ── keb_write_concept ─────────────────────────────────────
   pi.registerTool({
     name: "keb_write_concept",
-    label: "Write KEB Concept",
+    label: "Write Keb Concept",
     description:
       "Create a NEW concept page. Use keb_update_concept to add sources to an existing concept.",
     parameters: Type.Object({
@@ -265,7 +265,7 @@ export function registerTools(
   // ── keb_update_concept ───────────────────────────────────
   pi.registerTool({
     name: "keb_update_concept",
-    label: "Update KEB Concept",
+    label: "Update Keb Concept",
     description:
       "Update an EXISTING concept with new information from a document. " +
       "The new source is automatically merged with existing sources — you only need to pass the new one.",
@@ -322,7 +322,7 @@ export function registerTools(
   // ── keb_update_index ──────────────────────────────────────
   pi.registerTool({
     name: "keb_update_index",
-    label: "Update KEB Index",
+    label: "Update Keb Index",
     description:
       "Rebuild the knowledge base index.md. Disk is authoritative for what exists — " +
       "pass entries only for pages you can provide a fresh brief/description for. " +
@@ -432,7 +432,7 @@ export function registerTools(
   // ── keb_set_docname ─────────────────────────────────────
   pi.registerTool({
     name: "keb_set_docname",
-    label: "Set KEB DocName",
+    label: "Set Keb DocName",
     description:
       "Rename an inline document's temporary docName to a meaningful slug. Use during /keb:add:content compilation to pick a proper name.",
     parameters: Type.Object({

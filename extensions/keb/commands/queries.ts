@@ -66,7 +66,7 @@ export function registerQueryCommands(
       const lines: string[] = [];
 
       if (summaries.length === 0 && concepts.length === 0) {
-        lines.push(`KEB${wsLabel} is empty. Use /keb:add to add documents.`);
+        lines.push(`Keb${wsLabel} is empty. Use /keb:add to add documents.`);
       } else {
         lines.push(`## Knowledge Base${wsLabel}`);
         lines.push("");
@@ -137,7 +137,7 @@ export function registerQueryCommands(
           : null;
 
       const lines = [
-        `## KEB Status${wsLabel}`,
+        `## Keb Status${wsLabel}`,
         "",
         `  Root: \`${rootPath}\``,
         `  Sources: ${regCount}`,

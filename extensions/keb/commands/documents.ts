@@ -127,7 +127,7 @@ export function registerDocumentCommands(
           return;
         }
         ctx.ui.notify(
-          `Already in KEB${wsLabel}: inline content (added ${existing.addedAt.slice(0, 10)} as "${existing.docName}")`,
+          `Already in Keb${wsLabel}: inline content (added ${existing.addedAt.slice(0, 10)} as "${existing.docName}")`,
           "warning",
         );
         return;
@@ -442,7 +442,7 @@ async function handleUrlAdd(
       return;
     }
     ctx.ui.notify(
-      `Already in KEB${wsLabel}: ${fp} (added ${existing.addedAt.slice(0, 10)})`,
+      `Already in Keb${wsLabel}: ${fp} (added ${existing.addedAt.slice(0, 10)})`,
       "warning",
     );
     return;
@@ -569,7 +569,7 @@ async function handleFileAdd(
       return;
     }
     ctx.ui.notify(
-      `Already in KEB${wsLabel}: ${fp} (added ${existing.addedAt.slice(0, 10)})`,
+      `Already in Keb${wsLabel}: ${fp} (added ${existing.addedAt.slice(0, 10)})`,
       "warning",
     );
     return;
@@ -601,7 +601,7 @@ async function handleFileAdd(
 
   if (store.isDocNameUsed(docName, workspace)) {
     ctx.ui.notify(
-      `A document with slug "${docName}" already exists in the KEB.\n` +
+      `A document with slug "${docName}" already exists in the Keb.\n` +
         `Rename your file to something unique before adding it.`,
       "error",
     );
