@@ -46,7 +46,7 @@ function httpGet(targetUrl: string, maxRedirects = 5): Promise<string> {
         urlStr,
         {
           headers: {
-            "User-Agent": "pi-kb/0.1.0",
+            "User-Agent": "pi-keb/0.1.0",
             Accept: "text/html, text/plain",
           },
           family: 4, // force IPv4 — avoids IPv6 timeouts
