@@ -14,7 +14,7 @@
   },
   "pi": {
     "extensions": [
-      "./extensions/kb"
+      "./extensions/keb"
     ]
   },
   "dependencies": {
@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dheeto/pi-keb"
+    "url": "https://github.com/auto-medica-labs/pi-keb"
   },
   "devDependencies": {
     "tsx": "^4.22.3",

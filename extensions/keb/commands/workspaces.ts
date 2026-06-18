@@ -15,7 +15,7 @@ export function registerWorkspaceCommands(
   // ── /keb:workspace:init <workspace-name> ──────────────────────────────
   pi.registerCommand("keb:workspace:init", {
     description:
-      "Create a new named workspace under kb/workspaces/ (e.g. /keb:workspace:init myproject)",
+      "Create a new named workspace under keb/workspaces/ (e.g. /keb:workspace:init myproject)",
     handler: async (args, ctx) => {
       if (!args || !args.trim()) {
         ctx.ui.notify(

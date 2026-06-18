@@ -1,9 +1,9 @@
 /**
  * adapters/filesystem-store.ts — File I/O implementation of KnowledgeBaseStore.
  *
- * All paths are relative to KB_ROOT (~/.pi/agent/kb/).
- * Named workspaces live under ~/.pi/agent/kb/workspaces/<name>/.
- * The default workspace lives directly under KB_ROOT.
+ * All paths are relative to KEB_ROOT (~/.pi/agent/keb/).
+ * Named workspaces live under ~/.pi/agent/keb/workspaces/<name>/.
+ * The default workspace lives directly under KEB_ROOT.
  */
 
 import * as fs from "node:fs";
@@ -24,8 +24,8 @@ import type {
 // Path constants
 // ---------------------------------------------------------------------------
 
-export const KB_ROOT = path.join(homedir(), ".pi", "agent", "kb");
-export const WORKSPACES_DIR = path.join(KB_ROOT, "workspaces");
+export const KEB_ROOT = path.join(homedir(), ".pi", "agent", "keb");
+export const WORKSPACES_DIR = path.join(KEB_ROOT, "workspaces");
 
 // ---------------------------------------------------------------------------
 // FilesystemStore
@@ -36,7 +36,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
 
   getWorkspaceRoot(name?: string): WorkspacePaths {
     const base =
-      name && name !== "default" ? path.join(WORKSPACES_DIR, name) : KB_ROOT;
+      name && name !== "default" ? path.join(WORKSPACES_DIR, name) : KEB_ROOT;
 
     return {
       root: base,
@@ -193,7 +193,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     const destAbs = path.join(wp.sourceDir, name);
     if (fs.existsSync(destAbs)) {
       throw new Error(
-        `A file named "${name}" already exists in the KB source/ directory.\n` +
+        `A file named "${name}" already exists in the KEB source/ directory.\n` +
           `Rename your file on disk before adding it.`,
       );
     }
@@ -210,7 +210,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     const destAbs = path.join(wp.sourceDir, filename);
     if (fs.existsSync(destAbs)) {
       throw new Error(
-        `A file named "${filename}" already exists in the KB source/ directory.`,
+        `A file named "${filename}" already exists in the KEB source/ directory.`,
       );
     }
     fs.writeFileSync(destAbs, content, "utf-8");
@@ -491,7 +491,7 @@ function buildConceptFooter(sources: string[]): string {
 /**
  * Regenerate `**Concepts**` footers in all summary files by scanning
  * concept sources to find which concepts reference each summary.
- * Called at the end of compilation (in kb_update_index) so summary
+ * Called at the end of compilation (in keb_update_index) so summary
  * footers are always in sync with concept source lists.
  */
 export function syncSummaryFooters(

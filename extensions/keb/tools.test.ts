@@ -6,7 +6,7 @@
  *   - writeConcept (creation with sources)
  *   - updateConcept (source merging — the key new behavior)
  *
- * Run: node --import tsx --test extensions/kb/tools.test.ts
+ * Run: node --import tsx --test extensions/keb/tools.test.ts
  */
 
 import { describe, it, beforeEach, afterEach } from "node:test";
@@ -43,7 +43,7 @@ function parseSources(content: string): string[] {
 }
 
 function wsDir(): string {
-  return path.join(os.homedir(), ".pi/agent/kb/workspaces/test-ws");
+  return path.join(os.homedir(), ".pi/agent/keb/workspaces/test-ws");
 }
 
 // ---------------------------------------------------------------------------

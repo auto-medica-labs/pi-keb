@@ -34,7 +34,7 @@ All commands accept `-w <name>` to target a specific workspace:
 /keb:remove -w myproject design
 ```
 
-If no workspace is specified, commands operate on the **default** workspace at `~/.pi/agent/kb/`.
+If no workspace is specified, commands operate on the **default** workspace at `~/.pi/agent/keb/`.
 
 ### Interrupted compilations & recovery
 
@@ -65,7 +65,7 @@ them with `⚠[pending]`.
 Re-adding the same file also triggers automatic recovery.
 
 **Removal recovery:** If a `/keb:remove` session is interrupted, Phase 1 completes
-synchronously so the KB is always internally consistent. If Phase 2 (LLM cleanup)
+synchronously so the KEB is always internally consistent. If Phase 2 (LLM cleanup)
 is interrupted, affected concepts keep a `needs_review: true` flag that can be
 cleared by re-running the removal or manually updating the concept.
 
@@ -84,7 +84,7 @@ Create isolated knowledge bases for different projects:
 /keb:query -w myproject "what's the auth flow?"
 ```
 
-Workspaces are stored as subdirectories under `~/.pi/agent/kb/workspaces/`.
+Workspaces are stored as subdirectories under `~/.pi/agent/keb/workspaces/`.
 
 To delete a workspace and all its data:
 
@@ -147,7 +147,7 @@ Removal uses a **two-phase staged pipeline**. Phase 1 is entirely deterministic 
 
 - Only runs if concepts were affected
 - The LLM reads each concept flagged `needs_review: true`, surgically removes content traceable to the deleted document, and writes back with `needs_review: false`
-- If the session is interrupted during Phase 2, the KB remains valid — concepts just have `needs_review: true` flags that can be resolved later with a re-run
+- If the session is interrupted during Phase 2, the KEB remains valid — concepts just have `needs_review: true` flags that can be resolved later with a re-run
 
 ### File format
 
@@ -195,7 +195,7 @@ needs_review: false
 
 **Compilation interrupted:** If a `/keb:add` session is interrupted mid-compilation, the registry keeps `compiled: false`. `/keb:status` shows a `⚠ Pending compilation` line. Run `/keb:repair` to resume.
 
-**Removal interrupted:** If a `/keb:remove` session is interrupted after Phase 1 (which completes synchronously), the KB is already consistent. If interrupted during Phase 2, concepts retain `needs_review: true` flags. Re-running `/keb:remove` for the same document or manually calling `keb_write_concept` on the affected concepts clears the flag.
+**Removal interrupted:** If a `/keb:remove` session is interrupted after Phase 1 (which completes synchronously), the KEB is already consistent. If interrupted during Phase 2, concepts retain `needs_review: true` flags. Re-running `/keb:remove` for the same document or manually calling `keb_write_concept` on the affected concepts clears the flag.
 
 ### Failure modes — before vs after
 
@@ -208,11 +208,11 @@ needs_review: false
 | LLM forgets old sources when updating concept | Sources lost                        | Union from disk — old sources always preserved                     |
 
 ```
-~/.pi/agent/kb/
+~/.pi/agent/keb/
 ├── registry.json         # Hash-based dedup tracking
 ├── source/               # Original file copies
 ├── wiki/
-│   ├── index.md          # KB overview with one-liner entries
+│   ├── index.md          # KEB overview with one-liner entries
 │   ├── summaries/        # Per-document summaries
 │   └── concepts/         # Cross-document topic synthesis
 └── workspaces/           # Named, isolated workspaces
@@ -247,7 +247,7 @@ If a page produces an empty or garbled result, try finding a static mirror, an a
 
 ## Query from anywhere
 
-The knowledge base lives in `~/.pi/agent/kb/` — a fixed location in your home directory, not inside any project or repository. Once you've compiled documents, you can run `/keb:query` (with an optional `-w` workspace flag) from any directory on your machine. There's no need to be inside the repo where the source files originally came from.
+The knowledge base lives in `~/.pi/agent/keb/` — a fixed location in your home directory, not inside any project or repository. Once you've compiled documents, you can run `/keb:query` (with an optional `-w` workspace flag) from any directory on your machine. There's no need to be inside the repo where the source files originally came from.
 
 Cross-reference documents across workspaces by switching between them:
 
@@ -256,16 +256,16 @@ Cross-reference documents across workspaces by switching between them:
 /keb:query -w backend "how does this repo handle errors?"
 ```
 
-## Version controlling your KB
+## Version controlling your KEB
 
-The `~/.pi/agent/kb/` folder is plain files — `registry.json` and markdown — so it's easy to track with Git if you want history, backups, or to sync across machines.
+The `~/.pi/agent/keb/` folder is plain files — `registry.json` and markdown — so it's easy to track with Git if you want history, backups, or to sync across machines.
 
 ```bash
-cd ~/.pi/agent/kb
+cd ~/.pi/agent/keb
 git init
 echo "source/" >> .gitignore   # optionally skip raw source copies
 git add .
-git commit -m "initial kb snapshot"
+git commit -m "initial keb snapshot"
 ```
 
 From there, commit whenever you add documents, push to a private remote to back up or share the compiled wiki, and pull on another machine to restore it. Since `/keb:add` deduplicates via `registry.json`, the state will be consistent as long as the registry and wiki are in sync.

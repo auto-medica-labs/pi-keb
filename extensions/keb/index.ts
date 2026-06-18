@@ -1,5 +1,5 @@
 /**
- * index.ts — Entry point for the pi-native KB extension.
+ * index.ts — Entry point for the pi-native KEB extension.
  *
  * Composes the ports & adapters architecture:
  *   - adapters/  → infrastructure (filesystem, HTTP)

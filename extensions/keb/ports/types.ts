@@ -1,5 +1,5 @@
 /**
- * ports/types.ts — Domain types and interfaces for the KB extension.
+ * ports/types.ts — Domain types and interfaces for the KEB extension.
  *
  * Every adapter (filesystem, HTTP) implements one of the ports defined here.
  * Command and tool handlers depend only on these interfaces, never on

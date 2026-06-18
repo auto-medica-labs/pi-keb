@@ -1,7 +1,7 @@
 /**
  * utils.test.ts — Tests for pure helper functions in utils.ts.
  *
- * Run: node --import tsx --test extensions/kb/utils.test.ts
+ * Run: node --import tsx --test extensions/keb/utils.test.ts
  */
 
 import { describe, it } from "node:test";
