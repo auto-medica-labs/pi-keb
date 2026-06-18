@@ -1,7 +1,7 @@
 /**
  * commands/workspaces.ts — Workspace management commands.
  *
- * Registers: /kb-init, /kb-workspaces, /kb-clear, /kb-ws-rm
+ * Registers: /keb:workspace:init, /keb:workspace:status, /keb:workspace:clear, /keb:workspace:remove
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -12,16 +12,16 @@ export function registerWorkspaceCommands(
   pi: ExtensionAPI,
   store: KnowledgeBaseStore,
 ) {
-  // ── /kb-init <workspace-name> ──────────────────────────────
-  pi.registerCommand("kb-init", {
+  // ── /keb:workspace:init <workspace-name> ──────────────────────────────
+  pi.registerCommand("keb:workspace:init", {
     description:
-      "Create a new named workspace under kb/workspaces/ (e.g. /kb-init myproject)",
+      "Create a new named workspace under keb/workspaces/ (e.g. /keb:workspace:init myproject)",
     handler: async (args, ctx) => {
       if (!args || !args.trim()) {
         ctx.ui.notify(
-          "Usage: /kb-init <workspace-name>\n\n" +
+          "Usage: /keb:workspace:init <workspace-name>\n\n" +
             "Creates a named workspace. Use -w <name> on other commands to target it.\n" +
-            "Example: /kb-init myproject",
+            "Example: /keb:workspace:init myproject",
           "warning",
         );
         return;
@@ -38,33 +38,33 @@ export function registerWorkspaceCommands(
 
       if (store.workspaceExists(name)) {
         ctx.ui.notify(
-          `Workspace "${name}" already exists. Use /kb-add -w ${name} <file> to add documents.`,
+          `Workspace "${name}" already exists. Use /keb:add -w ${name} <file> to add documents.`,
           "warning",
         );
         return;
       }
 
-      store.ensureKbDir(name);
+      store.ensureKebDir(name);
       ctx.ui.notify(
         `Workspace created: ${name}\n` +
           `  Path: ${store.getWorkspaceRoot(name).root}\n\n` +
           `Usage:\n` +
-          `  /kb-add -w ${name} <file>   Add documents\n` +
-          `  /kb-query -w ${name} <q>    Search this workspace\n` +
-          `  /kb-workspaces              List all workspaces`,
+          `  /keb:add -w ${name} <file>   Add documents\n` +
+          `  /keb:query -w ${name} <q>    Search this workspace\n` +
+          `  /keb:workspace:status        List all workspaces`,
         "info",
       );
     },
   });
 
-  // ── /kb-workspaces ────────────────────────────────────────
-  pi.registerCommand("kb-workspaces", {
+  // ── /keb:workspace:status ────────────────────────────────────────
+  pi.registerCommand("keb:workspace:status", {
     description: "List all workspaces and their stats",
     handler: async (_args, ctx) => {
       const lines: string[] = ["## Workspaces", ""];
 
       // Default workspace
-      const defExists = store.kbExists();
+      const defExists = store.kebExists();
       if (defExists) {
         const defSummaries = store.listSummaries();
         const defConcepts = store.listConcepts();
@@ -83,7 +83,7 @@ export function registerWorkspaceCommands(
       if (named.length === 0) {
         lines.push("");
         lines.push(
-          "No named workspaces. Use /kb-init <name> to create one.",
+          "No named workspaces. Use /keb:workspace:init <name> to create one.",
         );
       } else {
         lines.push("");
@@ -102,8 +102,8 @@ export function registerWorkspaceCommands(
     },
   });
 
-  // ── /kb-clear <workspace-name> [-y] ──────────────────
-  pi.registerCommand("kb-clear", {
+  // ── /keb:workspace:clear <workspace-name> [-y] ──────────────────
+  pi.registerCommand("keb:workspace:clear", {
     description:
       "Clear all wiki content (source/, wiki/, registry) from a workspace " +
       "while keeping the workspace directory. Works for both default and named " +
@@ -112,13 +112,13 @@ export function registerWorkspaceCommands(
       const { yes, rest: outerName } = parseWorkspaceArgs(args ?? "");
       if (!outerName) {
         ctx.ui.notify(
-          "Usage: /kb-clear [-y] <workspace-name>\n\n" +
+          "Usage: /keb:workspace:clear [-y] <workspace-name>\n\n" +
             "Clears all wiki content but keeps the workspace directory.\n" +
             "Works for both default and named workspaces.\n" +
             "Examples:\n" +
-            "  /kb-clear default\n" +
-            "  /kb-clear myproject\n" +
-            "  /kb-clear -y default   # skip confirmation",
+            "  /keb:workspace:clear default\n" +
+            "  /keb:workspace:clear myproject\n" +
+            "  /keb:workspace:clear -y default   # skip confirmation",
           "warning",
         );
         return;
@@ -171,23 +171,23 @@ export function registerWorkspaceCommands(
     },
   });
 
-  // ── /kb-ws-rm <workspace-name> [-y] ────────────────────
-  pi.registerCommand("kb-ws-rm", {
+  // ── /keb:workspace:remove <workspace-name> [-y] ────────────────────
+  pi.registerCommand("keb:workspace:remove", {
     description:
       "Delete a named workspace entirely (its whole folder). " +
-      "Does not support the default workspace — use /kb-clear default instead. " +
+      "Does not support the default workspace — use /keb:workspace:clear default instead. " +
       "Pass -y to skip confirmation.",
     handler: async (args, ctx) => {
       const { yes, rest: name } = parseWorkspaceArgs(args ?? "");
 
       if (!name) {
         ctx.ui.notify(
-          "Usage: /kb-ws-rm [-y] <workspace-name>\n\n" +
+          "Usage: /keb:workspace:remove [-y] <workspace-name>\n\n" +
             "Deletes the entire named workspace folder.\n" +
-            "To clear the default workspace, use /kb-clear default instead.\n" +
+            "To clear the default workspace, use /keb:workspace:clear default instead.\n" +
             "Examples:\n" +
-            "  /kb-ws-rm myproject\n" +
-            "  /kb-ws-rm -y myproject   # skip confirmation",
+            "  /keb:workspace:remove myproject\n" +
+            "  /keb:workspace:remove -y myproject   # skip confirmation",
           "warning",
         );
         return;
@@ -195,8 +195,8 @@ export function registerWorkspaceCommands(
 
       if (name === "default") {
         ctx.ui.notify(
-          "/kb-ws-rm does not support the default workspace. " +
-            "Use /kb-clear default to clear it instead.",
+          "/keb:workspace:remove does not support the default workspace. " +
+            "Use /keb:workspace:clear default to clear it instead.",
           "error",
         );
         return;

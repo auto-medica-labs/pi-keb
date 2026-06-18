@@ -110,7 +110,7 @@ export function isoNow(): string {
 
 /**
  * Build index.md content from ground-truth disk state.
- * Used by Phase 1 of /kb-remove and by standalone repair utilities.
+ * Used by Phase 1 of /keb:remove and by standalone repair utilities.
  */
 export function buildIndexContent(
   summaries: string[],

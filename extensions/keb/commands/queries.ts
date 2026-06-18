@@ -1,7 +1,7 @@
 /**
  * commands/queries.ts — Query and inspection commands.
  *
- * Registers: /kb-query, /kb-list, /kb-status
+ * Registers: /keb:query, /keb:list, /keb:status
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -13,19 +13,19 @@ export function registerQueryCommands(
   pi: ExtensionAPI,
   store: KnowledgeBaseStore,
 ) {
-  // ── /kb-query <question> [-w <workspace>] ────────────────
-  pi.registerCommand("kb-query", {
+  // ── /keb:query <question> [-w <workspace>] ────────────────
+  pi.registerCommand("keb:query", {
     description:
       "Ask a question against the knowledge base. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       const { workspace, rest } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
         ctx.ui.notify(
-          `${label} found. Use /kb-init${workspace ? ` ${workspace}` : ""} first, or /kb-add to populate.`,
+          `${label} found. Use /keb:workspace:init${workspace ? ` ${workspace}` : ""} first, or /keb:add to populate.`,
           "warning",
         );
         return;
@@ -33,7 +33,7 @@ export function registerQueryCommands(
 
       if (!rest) {
         ctx.ui.notify(
-          "Usage: /kb-query <question> [-w <workspace>]",
+          "Usage: /keb:query <question> [-w <workspace>]",
           "warning",
         );
         return;
@@ -43,14 +43,14 @@ export function registerQueryCommands(
     },
   });
 
-  // ── /kb-list [-w <workspace>] ────────────────────────────
-  pi.registerCommand("kb-list", {
+  // ── /keb:list [-w <workspace>] ────────────────────────────
+  pi.registerCommand("keb:list", {
     description:
       "List all documents and concepts in the knowledge base. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       const { workspace } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
@@ -66,7 +66,7 @@ export function registerQueryCommands(
       const lines: string[] = [];
 
       if (summaries.length === 0 && concepts.length === 0) {
-        lines.push(`KB${wsLabel} is empty. Use /kb-add to add documents.`);
+        lines.push(`Keb${wsLabel} is empty. Use /keb:add to add documents.`);
       } else {
         lines.push(`## Knowledge Base${wsLabel}`);
         lines.push("");
@@ -100,14 +100,14 @@ export function registerQueryCommands(
     },
   });
 
-  // ── /kb-status [-w <workspace>] ──────────────────────────
-  pi.registerCommand("kb-status", {
+  // ── /keb:status [-w <workspace>] ──────────────────────────
+  pi.registerCommand("keb:status", {
     description:
       "Show knowledge base statistics. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       const { workspace } = parseWorkspaceArgs(args);
 
-      if (!store.kbExists(workspace)) {
+      if (!store.kebExists(workspace)) {
         const label = workspace
           ? `Workspace "${workspace}"`
           : "No knowledge base";
@@ -133,11 +133,11 @@ export function registerQueryCommands(
       const pendingCount = store.countPendingCompilations(workspace);
       const pendingLine =
         pendingCount > 0
-          ? `  ⚠ Pending compilation: ${pendingCount} (use /kb-repair to finish)`
+          ? `  ⚠ Pending compilation: ${pendingCount} (use /keb:repair to finish)`
           : null;
 
       const lines = [
-        `## KB Status${wsLabel}`,
+        `## Keb Status${wsLabel}`,
         "",
         `  Root: \`${rootPath}\``,
         `  Sources: ${regCount}`,

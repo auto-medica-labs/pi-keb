@@ -1,5 +1,5 @@
 /**
- * ports/types.ts — Domain types and interfaces for the KB extension.
+ * ports/types.ts — Domain types and interfaces for the Keb extension.
  *
  * Every adapter (filesystem, HTTP) implements one of the ports defined here.
  * Command and tool handlers depend only on these interfaces, never on
@@ -79,8 +79,8 @@ export interface KnowledgeBaseStore {
   // ── Workspaces ───────────────────────────────────────
   listWorkspaces(): string[];
   workspaceExists(name: string): boolean;
-  ensureKbDir(workspace?: string): boolean;
-  kbExists(workspace?: string): boolean;
+  ensureKebDir(workspace?: string): boolean;
+  kebExists(workspace?: string): boolean;
   deleteWorkspace(name?: string): string;
   clearWorkspace(name?: string): string;
 

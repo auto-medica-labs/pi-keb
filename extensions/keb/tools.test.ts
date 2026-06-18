@@ -6,7 +6,7 @@
  *   - writeConcept (creation with sources)
  *   - updateConcept (source merging — the key new behavior)
  *
- * Run: node --import tsx --test extensions/kb/tools.test.ts
+ * Run: node --import tsx --test extensions/keb/tools.test.ts
  */
 
 import { describe, it, beforeEach, afterEach } from "node:test";
@@ -43,7 +43,7 @@ function parseSources(content: string): string[] {
 }
 
 function wsDir(): string {
-  return path.join(os.homedir(), ".pi/agent/kb/workspaces/test-ws");
+  return path.join(os.homedir(), ".pi/agent/keb/workspaces/test-ws");
 }
 
 // ---------------------------------------------------------------------------
@@ -52,7 +52,7 @@ function wsDir(): string {
 
 function setup() {
   const store = new FilesystemStore();
-  store.ensureKbDir("test-ws");
+  store.ensureKebDir("test-ws");
   return store;
 }
 
@@ -166,7 +166,7 @@ describe("updateConcept (deterministic source merge)", () => {
   beforeEach(() => { store = setup(); });
   afterEach(() => teardown());
 
-  // Simulates what kb_update_concept does:
+  // Simulates what keb_update_concept does:
   function updateConcept(
     slug: string,
     body: string,
@@ -278,7 +278,7 @@ describe("syncSummaryFooters (post-compile deterministic sync)", () => {
       "test-ws",
     );
 
-    // Sync footers (simulates what kb_update_index does)
+    // Sync footers (simulates what keb_update_index does)
     syncSummaryFooters(store, "test-ws");
 
     // doc-a footer should now reflect concept sources
