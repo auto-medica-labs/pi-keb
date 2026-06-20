@@ -273,6 +273,14 @@ export function registerTools(
       const originalName = entry?.name ?? `${params.docName}.md`;
       const addedAt = entry?.addedAt ?? isoNow();
 
+      // Populate OKF resource field when the source is an HTTP(S) URL
+      const resource =
+        entry?.originalPath &&
+        (entry.originalPath.startsWith("http://") ||
+          entry.originalPath.startsWith("https://"))
+          ? entry.originalPath
+          : undefined;
+
       store.writeSummary(
         params.docName,
         params.content,
@@ -282,6 +290,7 @@ export function registerTools(
         {
           title: params.title,
           description: params.description,
+          resource,
           tags: params.tags,
         },
       );
