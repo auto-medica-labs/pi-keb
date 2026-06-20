@@ -95,7 +95,9 @@ export function buildCompilePrompt(
     `### Formatting rules`,
     `- Concepts MUST be cross-document synthesis, not single-document regurgitation`,
     `- Be concise. Wiki content should be scannable.`,
-    `- Do NOT write footer sections — they are generated automatically.`,
+    `- Use standard markdown links in body text: [text](/concepts/slug.md), [text](/summaries/doc.md)`,
+    `- Include a brief \`description\` in the frontmatter — it feeds the index`,
+    `- Use \`tags\` for cross-cutting categorization`,
   ].join("\n");
 }
 
@@ -186,7 +188,9 @@ export function buildCompilePromptInline(
     `### Formatting rules`,
     `- Concepts MUST be cross-document synthesis, not single-document regurgitation`,
     `- Be concise. Wiki content should be scannable.`,
-    `- Do NOT write footer sections — they are generated automatically.`,
+    `- Use standard markdown links in body text: [text](/concepts/slug.md), [text](/summaries/doc.md)`,
+    `- Include a brief \`description\` in the frontmatter — it feeds the index`,
+    `- Use \`tags\` for cross-cutting categorization`,
   ].join("\n");
 }
 
@@ -219,7 +223,7 @@ export function buildQueryPrompt(question: string, workspace?: string): string {
     ``,
     `## Formatting rules`,
     `- Cite every source so the user can verify the answer. Use backtick format: \`summary/docname\` or \`concept/slug\`.`,
-    `- NEVER use [[wiki-links]] or [markdown](links) — the display app cannot render them.`,
+    `- Use standard markdown links in body text: [text](/concepts/slug.md), [text](/summaries/doc.md)`,
     `- Keep answers concise and scannable.`,
     ``,
     `**Question:** ${question}`,
@@ -292,7 +296,7 @@ export function buildRemovePrompt(
     `DO NOT call \`keb_update_index\` — the index was already rebuilt in Phase 1.`,
     ``,
     `### Formatting rules`,
-    `- When referencing other documents or concepts in the rewritten body, use backtick format:`,
-    `  \`summary/docname\` or \`concept/slug\`, never [[wiki-links]] or [markdown](links).`,
+    `- When referencing other documents or concepts in the rewritten body, use standard markdown links:`,
+    `  [text](/summaries/docname.md) or [text](/concepts/slug.md)`,
   ].join("\n");
 }

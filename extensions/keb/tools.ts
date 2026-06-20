@@ -14,8 +14,6 @@ import { Type } from "typebox";
 import { StringEnum } from "@earendil-works/pi-ai";
 import type { KnowledgeBaseStore } from "./ports/types";
 import { isoNow } from "./utils";
-import { syncSummaryFooters } from "./adapters/filesystem-store";
-import type { FilesystemStore } from "./adapters/filesystem-store";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -26,13 +24,18 @@ import * as path from "node:path";
 /**
  * Parse the existing index.md to extract preserved briefs.
  * Returns a Map of "summary/foo" | "concept/bar" → brief text.
+ * Matches OKF-style standard markdown links: - [Title](/summaries/slug.md) — brief
  */
 function parseIndexBriefs(indexContent: string): Map<string, string> {
   const briefs = new Map<string, string>();
-  const pattern = /^- \[\[(summary|concept)\/([^\]]+)\]\] — (.+)$/gm;
+  const pattern = /^- \[([^\]]+)\]\(\/(summaries|concepts)\/([^)]+)\.md\)\s*(?:—\s*(.+))?$/gm;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(indexContent)) !== null) {
-    briefs.set(`${match[1]}/${match[2]}`, match[3].trim());
+    const dir = match[2]; // "summaries" or "concepts"
+    const slug = match[3]; // filename without .md
+    const type = dir === "summaries" ? "summary" : "concept";
+    const brief = match[4]?.trim() ?? "";
+    briefs.set(`${type}/${slug}`, brief);
   }
   return briefs;
 }
@@ -115,7 +118,11 @@ export function registerTools(
       const needsReviewNote = info.needsReview
         ? `\n⚠ needs_review: true (a source document was removed — body may need cleanup)`
         : "";
-      const header = `## ${params.slug}\nSources: ${info.sources.join(", ")}${needsReviewNote}\n\n`;
+      let header = `## ${params.slug}\n`;
+      if (info.title) header += `**Title:** ${info.title}\n`;
+      header += `Sources: ${info.sources.join(", ")}`;
+      if (info.tags && info.tags.length > 0) header += `\nTags: ${info.tags.join(", ")}`;
+      header += `${needsReviewNote}\n\n`;
       return {
         content: [{ type: "text" as const, text: header + info.body }],
         details: {},
@@ -177,6 +184,15 @@ export function registerTools(
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
+      title: Type.Optional(
+        Type.String({ description: "Optional display title for the summary" }),
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Optional one-line description for the index" }),
+      ),
+      tags: Type.Optional(
+        Type.Array(Type.String(), { description: "Optional tags for categorization" }),
+      ),
     }),
     async execute(_toolCallId, params) {
       // Guard: reject temporary inline-* docNames — LLM must call keb_set_docname first
@@ -205,6 +221,11 @@ export function registerTools(
         originalName,
         addedAt,
         params.workspace,
+        {
+          title: params.title,
+          description: params.description,
+          tags: params.tags,
+        },
       );
 
       return {
@@ -239,6 +260,15 @@ export function registerTools(
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
+      title: Type.Optional(
+        Type.String({ description: "Optional display title for the concept" }),
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Optional one-line description for the index" }),
+      ),
+      tags: Type.Optional(
+        Type.Array(Type.String(), { description: "Optional tags for categorization" }),
+      ),
     }),
     async execute(_toolCallId, params) {
       const existed = store.listConcepts(params.workspace).includes(params.slug);
@@ -248,6 +278,12 @@ export function registerTools(
         params.content,
         params.sources,
         params.workspace,
+        undefined,
+        {
+          title: params.title,
+          description: params.description,
+          tags: params.tags,
+        },
       );
       const action = existed ? "updated" : "created";
       return {
@@ -283,6 +319,15 @@ export function registerTools(
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
+      title: Type.Optional(
+        Type.String({ description: "Optional display title for the concept" }),
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Optional one-line description for the index" }),
+      ),
+      tags: Type.Optional(
+        Type.Array(Type.String(), { description: "Optional tags for categorization" }),
+      ),
     }),
     async execute(_toolCallId, params) {
       const existing = store.readConcept(params.slug, params.workspace);
@@ -301,11 +346,22 @@ export function registerTools(
       // Deterministic union: old sources preserved, new source appended
       const mergedSources = [...new Set([...existing.sources, params.source])];
 
+      // Preserve existing OKF fields, override with any new ones from params
+      const okfFields: { title?: string; description?: string; tags?: string[] } = {};
+      if (params.title) okfFields.title = params.title;
+      else if (existing.title) okfFields.title = existing.title;
+      if (params.description) okfFields.description = params.description;
+      else if (existing.description) okfFields.description = existing.description;
+      if (params.tags) okfFields.tags = params.tags;
+      else if (existing.tags) okfFields.tags = existing.tags;
+
       store.writeConcept(
         params.slug,
         params.content,
         mergedSources,
         params.workspace,
+        undefined,
+        okfFields,
       );
       return {
         content: [
@@ -369,7 +425,7 @@ export function registerTools(
 
       for (const slug of diskSummarySlugs) {
         const brief = resolveBrief("summary", slug, "(summary)");
-        docLines.push(`- [[summary/${slug}]] — ${brief}`);
+        docLines.push(`- [${slug}](/summaries/${slug}.md) — ${brief}`);
       }
 
       for (const slug of diskConceptSlugs) {
@@ -378,7 +434,7 @@ export function registerTools(
           ? `sources: ${concept.sources.join(", ")}`
           : "(concept)";
         const brief = resolveBrief("concept", slug, sourcesFallback);
-        conceptLines.push(`- [[concept/${slug}]] — ${brief}`);
+        conceptLines.push(`- [${slug}](/concepts/${slug}.md) — ${brief}`);
       }
 
       const index = [
@@ -413,9 +469,6 @@ export function registerTools(
       if (markedCount > 0) {
         store.writeRegistry(reg, params.workspace);
       }
-
-      // Sync summary footers from actual concept sources (deterministic)
-      syncSummaryFooters(store as FilesystemStore, params.workspace);
 
       return {
         content: [

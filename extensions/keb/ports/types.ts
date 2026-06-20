@@ -37,6 +37,10 @@ export interface ConceptInfo {
   /** True when a source was removed and the body needs LLM review (Phase 2) */
   needsReview: boolean;
   body: string;
+  /** OKF standard fields (optional, populated from frontmatter) */
+  title?: string;
+  description?: string;
+  tags?: string[];
 }
 
 export interface WikiDump {
@@ -119,6 +123,7 @@ export interface KnowledgeBaseStore {
     originalName: string,
     addedAt: string,
     workspace?: string,
+    okfFields?: { title?: string; description?: string; resource?: string; tags?: string[] }
   ): void;
   deleteSummary(docName: string, workspace?: string): boolean;
 
@@ -131,6 +136,7 @@ export interface KnowledgeBaseStore {
     sources: string[],
     workspace?: string,
     needsReview?: boolean,
+    okfFields?: { title?: string; description?: string; tags?: string[] }
   ): void;
   deleteConcept(slug: string, workspace?: string): boolean;
 
