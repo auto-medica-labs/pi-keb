@@ -54,6 +54,7 @@ export function buildCompilePrompt(
     `### Step 1: Read current state`,
     `Call \`keb_read_index\` to see the current index.`,
     `Call \`keb_list_concepts\` to see existing concept slugs.`,
+    `Call \`keb_list_tags\` to see existing tags and reuse them for consistency.`,
     ``,
     `### Step 2: Write the summary`,
     `Write a concise summary (200-400 words) for this document. Call:`,
@@ -97,7 +98,7 @@ export function buildCompilePrompt(
     `- Be concise. Wiki content should be scannable.`,
     `- Use standard markdown links in body text: [text](/concepts/slug.md), [text](/summaries/doc.md)`,
     `- Include a brief \`description\` in the frontmatter — it feeds the index`,
-    `- Use \`tags\` for cross-cutting categorization`,
+    `- ALWAYS include \`tags\` for cross-cutting categorization. Call \`keb_list_tags\` first to see existing tags and reuse them for consistency.`,
   ].join("\n");
 }
 
@@ -147,6 +148,7 @@ export function buildCompilePromptInline(
     `### Important: before writing ANYTHING, always read current state`,
     `Call \`keb_read_index\` to see the current index.`,
     `Call \`keb_list_concepts\` to see existing concept slugs.`,
+    `Call \`keb_list_tags\` to see existing tags and reuse them for consistency.`,
     ``,
     `### Step 1: Write the summary`,
     `Write a concise summary (200-400 words) for this document. Call:`,
@@ -190,7 +192,7 @@ export function buildCompilePromptInline(
     `- Be concise. Wiki content should be scannable.`,
     `- Use standard markdown links in body text: [text](/concepts/slug.md), [text](/summaries/doc.md)`,
     `- Include a brief \`description\` in the frontmatter — it feeds the index`,
-    `- Use \`tags\` for cross-cutting categorization`,
+    `- ALWAYS include \`tags\` for cross-cutting categorization. Call \`keb_list_tags\` first to see existing tags and reuse them for consistency.`,
   ].join("\n");
 }
 

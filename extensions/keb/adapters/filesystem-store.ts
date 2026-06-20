@@ -295,7 +295,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     if (okfFields?.title) fields.title = okfFields.title;
     if (okfFields?.description) fields.description = okfFields.description;
     if (okfFields?.resource) fields.resource = okfFields.resource;
-    if (okfFields?.tags) fields.tags = okfFields.tags;
+    fields.tags = okfFields?.tags ?? [];
 
     const frontmatter = buildOkfFrontmatter(fields);
     const full = frontmatter + "\n\n" + content + "\n";
@@ -364,7 +364,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     };
     if (okfFields?.title) fields.title = okfFields.title;
     if (okfFields?.description) fields.description = okfFields.description;
-    if (okfFields?.tags) fields.tags = okfFields.tags;
+    fields.tags = okfFields?.tags ?? [];
 
     const frontmatter = buildOkfFrontmatter(fields);
     const full = frontmatter + "\n\n" + content + "\n";
