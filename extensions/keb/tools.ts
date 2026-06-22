@@ -13,9 +13,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { StringEnum } from "@earendil-works/pi-ai";
 import type { KnowledgeBaseStore } from "./ports/types";
-import { isoNow } from "./utils";
-import { syncSummaryFooters } from "./adapters/filesystem-store";
-import type { FilesystemStore } from "./adapters/filesystem-store";
+import { isoNow, parseOkfFrontmatter } from "./utils";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -26,13 +24,18 @@ import * as path from "node:path";
 /**
  * Parse the existing index.md to extract preserved briefs.
  * Returns a Map of "summary/foo" | "concept/bar" → brief text.
+ * Matches OKF-style standard markdown links: - [Title](/summaries/slug.md) — brief
  */
 function parseIndexBriefs(indexContent: string): Map<string, string> {
   const briefs = new Map<string, string>();
-  const pattern = /^- \[\[(summary|concept)\/([^\]]+)\]\] — (.+)$/gm;
+  const pattern = /^- \[([^\]]+)\]\(\/(summaries|concepts)\/([^)]+)\.md\)\s*(?:—\s*(.+))?$/gm;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(indexContent)) !== null) {
-    briefs.set(`${match[1]}/${match[2]}`, match[3].trim());
+    const dir = match[2]; // "summaries" or "concepts"
+    const slug = match[3]; // filename without .md
+    const type = dir === "summaries" ? "summary" : "concept";
+    const brief = match[4]?.trim() ?? "";
+    briefs.set(`${type}/${slug}`, brief);
   }
   return briefs;
 }
@@ -86,6 +89,64 @@ export function registerTools(
     },
   });
 
+  // ── keb_list_tags ─────────────────────────────────────────
+  pi.registerTool({
+    name: "keb_list_tags",
+    label: "List Keb Tags",
+    description:
+      "List all tags used across the knowledge base, grouped by the documents that use each tag. " +
+      "Call this before writing to see existing tags and reuse them for consistency.",
+    parameters: Type.Object({
+      workspace: Type.Optional(
+        Type.String({ description: "Workspace name (omit for default)" }),
+      ),
+    }),
+    async execute(_toolCallId, params) {
+      // Scan summaries for tags
+      const tagDocs = new Map<string, string[]>();
+      for (const name of store.listSummaries(params.workspace)) {
+        const raw = store.readSummary(name, params.workspace);
+        if (!raw) continue;
+        const { frontmatter } = parseOkfFrontmatter(raw);
+        if (Array.isArray(frontmatter.tags)) {
+          for (const tag of frontmatter.tags) {
+            if (!tagDocs.has(tag)) tagDocs.set(tag, []);
+            tagDocs.get(tag)!.push(`summary/${name}`);
+          }
+        }
+      }
+      for (const slug of store.listConcepts(params.workspace)) {
+        const info = store.readConcept(slug, params.workspace);
+        if (!info || !info.tags) continue;
+        for (const tag of info.tags) {
+          if (!tagDocs.has(tag)) tagDocs.set(tag, []);
+          tagDocs.get(tag)!.push(`concept/${slug}`);
+        }
+      }
+
+      if (tagDocs.size === 0) {
+        return {
+          content: [{ type: "text" as const, text: "(no tags yet)" }],
+          details: {},
+        };
+      }
+
+      const lines: string[] = ["Tags in knowledge base:", ""];
+      for (const [tag, docs] of [...tagDocs.entries()].sort()) {
+        lines.push(`${tag}:`);
+        for (const doc of docs) {
+          lines.push(`  - ${doc}`);
+        }
+        lines.push("");
+      }
+
+      return {
+        content: [{ type: "text" as const, text: lines.join("\n") }],
+        details: {},
+      };
+    },
+  });
+
   // ── keb_read_concept ──────────────────────────────────────
   pi.registerTool({
     name: "keb_read_concept",
@@ -115,7 +176,11 @@ export function registerTools(
       const needsReviewNote = info.needsReview
         ? `\n⚠ needs_review: true (a source document was removed — body may need cleanup)`
         : "";
-      const header = `## ${params.slug}\nSources: ${info.sources.join(", ")}${needsReviewNote}\n\n`;
+      let header = `## ${params.slug}\n`;
+      if (info.title) header += `**Title:** ${info.title}\n`;
+      header += `Sources: ${info.sources.join(", ")}`;
+      if (info.tags && info.tags.length > 0) header += `\nTags: ${info.tags.join(", ")}`;
+      header += `${needsReviewNote}\n\n`;
       return {
         content: [{ type: "text" as const, text: header + info.body }],
         details: {},
@@ -177,6 +242,15 @@ export function registerTools(
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
+      title: Type.Optional(
+        Type.String({ description: "Optional display title for the summary" }),
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Optional one-line description for the index" }),
+      ),
+      tags: Type.Array(Type.String(), {
+        description: "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
+      }),
     }),
     async execute(_toolCallId, params) {
       // Guard: reject temporary inline-* docNames — LLM must call keb_set_docname first
@@ -199,12 +273,26 @@ export function registerTools(
       const originalName = entry?.name ?? `${params.docName}.md`;
       const addedAt = entry?.addedAt ?? isoNow();
 
+      // Populate OKF resource field when the source is an HTTP(S) URL
+      const resource =
+        entry?.originalPath &&
+        (entry.originalPath.startsWith("http://") ||
+          entry.originalPath.startsWith("https://"))
+          ? entry.originalPath
+          : undefined;
+
       store.writeSummary(
         params.docName,
         params.content,
         originalName,
         addedAt,
         params.workspace,
+        {
+          title: params.title,
+          description: params.description,
+          resource,
+          tags: params.tags,
+        },
       );
 
       return {
@@ -239,6 +327,15 @@ export function registerTools(
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
+      title: Type.Optional(
+        Type.String({ description: "Optional display title for the concept" }),
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Optional one-line description for the index" }),
+      ),
+      tags: Type.Array(Type.String(), {
+        description: "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
+      }),
     }),
     async execute(_toolCallId, params) {
       const existed = store.listConcepts(params.workspace).includes(params.slug);
@@ -248,6 +345,12 @@ export function registerTools(
         params.content,
         params.sources,
         params.workspace,
+        undefined,
+        {
+          title: params.title,
+          description: params.description,
+          tags: params.tags,
+        },
       );
       const action = existed ? "updated" : "created";
       return {
@@ -283,6 +386,15 @@ export function registerTools(
       workspace: Type.Optional(
         Type.String({ description: "Workspace name (omit for default)" }),
       ),
+      title: Type.Optional(
+        Type.String({ description: "Optional display title for the concept" }),
+      ),
+      description: Type.Optional(
+        Type.String({ description: "Optional one-line description for the index" }),
+      ),
+      tags: Type.Array(Type.String(), {
+        description: "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
+      }),
     }),
     async execute(_toolCallId, params) {
       const existing = store.readConcept(params.slug, params.workspace);
@@ -301,11 +413,20 @@ export function registerTools(
       // Deterministic union: old sources preserved, new source appended
       const mergedSources = [...new Set([...existing.sources, params.source])];
 
+      // Preserve existing OKF fields, override with caller-provided values
+      const okfFields: { title?: string; description?: string; tags?: string[] } = {
+        title: params.title || existing.title,
+        description: params.description || existing.description,
+        tags: params.tags,
+      };
+
       store.writeConcept(
         params.slug,
         params.content,
         mergedSources,
         params.workspace,
+        undefined,
+        okfFields,
       );
       return {
         content: [
@@ -369,7 +490,7 @@ export function registerTools(
 
       for (const slug of diskSummarySlugs) {
         const brief = resolveBrief("summary", slug, "(summary)");
-        docLines.push(`- [[summary/${slug}]] — ${brief}`);
+        docLines.push(`- [${slug}](/summaries/${slug}.md) — ${brief}`);
       }
 
       for (const slug of diskConceptSlugs) {
@@ -378,7 +499,7 @@ export function registerTools(
           ? `sources: ${concept.sources.join(", ")}`
           : "(concept)";
         const brief = resolveBrief("concept", slug, sourcesFallback);
-        conceptLines.push(`- [[concept/${slug}]] — ${brief}`);
+        conceptLines.push(`- [${slug}](/concepts/${slug}.md) — ${brief}`);
       }
 
       const index = [
@@ -413,9 +534,6 @@ export function registerTools(
       if (markedCount > 0) {
         store.writeRegistry(reg, params.workspace);
       }
-
-      // Sync summary footers from actual concept sources (deterministic)
-      syncSummaryFooters(store as FilesystemStore, params.workspace);
 
       return {
         content: [

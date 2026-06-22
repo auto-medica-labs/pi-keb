@@ -80,7 +80,7 @@ export function registerQueryCommands(
             const pending =
               entry && !store.isEntryCompiled(entry) ? " ⚠[pending]" : "";
             lines.push(
-              `  - [[summary/${name}]] (source: ${source}, added: ${added})${pending}`,
+              `  - \`summary/${name}\` (source: ${source}, added: ${added})${pending}`,
             );
           }
           lines.push("");
@@ -91,7 +91,7 @@ export function registerQueryCommands(
           for (const slug of concepts) {
             const c = store.readConcept(slug, workspace);
             const srcs = c ? c.sources.join(", ") : "?";
-            lines.push(`  - [[concept/${slug}]] (sources: ${srcs})`);
+            lines.push(`  - \`concept/${slug}\` (sources: ${srcs})`);
           }
         }
       }

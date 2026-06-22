@@ -105,11 +105,91 @@ export function isoNow(): string {
 }
 
 // ---------------------------------------------------------------------------
+// OKF frontmatter helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Build an OKF-style YAML frontmatter string from a key-value map.
+ * - All string values are double-quoted (avoids YAML edge cases)
+ * - Arrays are serialized as inline YAML: [val1, val2]
+ * - Booleans are unquoted
+ * - Null/undefined values are skipped
+ */
+export function buildOkfFrontmatter(fields: Record<string, any>): string {
+  const lines = ["---"];
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined || value === null) continue;
+    if (Array.isArray(value)) {
+      const items = value.map((v: any) =>
+        `"${String(v).replace(/"/g, '\\"')}"`,
+      );
+      lines.push(`${key}: [${items.join(", ")}]`);
+    } else if (typeof value === "boolean") {
+      lines.push(`${key}: ${value}`);
+    } else {
+      lines.push(`${key}: "${String(value).replace(/"/g, '\\"')}"`);
+    }
+  }
+  lines.push("---");
+  return lines.join("\n");
+}
+
+/**
+ * Parse an OKF-style YAML frontmatter block.
+ * Returns the parsed key-value map and the body text (everything after frontmatter).
+ * If no frontmatter is found, returns an empty map and the full input as body.
+ */
+export function parseOkfFrontmatter(
+  raw: string,
+): { frontmatter: Record<string, any>; body: string } {
+  const frontmatter: Record<string, any> = {};
+  let body = raw;
+
+  if (raw.startsWith("---")) {
+    const end = raw.indexOf("---", 3);
+    if (end !== -1) {
+      const fm = raw.slice(3, end);
+      body = raw.slice(end + 3).trimStart();
+
+      for (const line of fm.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === "---") continue;
+        const colonIdx = trimmed.indexOf(":");
+        if (colonIdx === -1) continue;
+        const key = trimmed.slice(0, colonIdx).trim();
+        let value: any = trimmed.slice(colonIdx + 1).trim();
+
+        // Parse YAML inline array: [val1, val2]
+        if (value.startsWith("[") && value.endsWith("]")) {
+          value = value
+            .slice(1, -1)
+            .split(",")
+            .map((s: string) =>
+              s.trim().replace(/^["']|["']$/g, ""),
+            )
+            .filter(Boolean);
+        } else if (value === "true") {
+          value = true;
+        } else if (value === "false") {
+          value = false;
+        } else {
+          value = value.replace(/^["']|["']$/g, "");
+        }
+        frontmatter[key] = value;
+      }
+    }
+  }
+
+  return { frontmatter, body };
+}
+
+// ---------------------------------------------------------------------------
 // Deterministic index rebuild
 // ---------------------------------------------------------------------------
 
 /**
  * Build index.md content from ground-truth disk state.
+ * Uses OKF-style standard markdown links.
  * Used by Phase 1 of /keb:remove and by standalone repair utilities.
  */
 export function buildIndexContent(
@@ -118,15 +198,12 @@ export function buildIndexContent(
 ): string {
   const docLines =
     summaries.length > 0
-      ? summaries.map((s) => `- [[summary/${s}]]`)
+      ? summaries.map((s) => `- [${s}](/summaries/${s}.md)`)
       : ["(none)"];
 
   const conceptLines =
     concepts.length > 0
-      ? concepts.map(
-          (c) =>
-            `- [[concept/${c.slug}]] — sources: ${c.sources.join(", ")}`,
-        )
+      ? concepts.map((c) => `- [${c.slug}](/concepts/${c.slug}.md)`)
       : ["(none)"];
 
   return [
