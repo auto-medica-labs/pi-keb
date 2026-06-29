@@ -10,6 +10,48 @@ import * as https from "node:https";
 import * as http from "node:http";
 import type { ContentFetcher, FetchedContent } from "../ports/types";
 
+// ---------------------------------------------------------------------------
+// Blocker detection — patterns that indicate the page is not real content
+// ---------------------------------------------------------------------------
+
+const BLOCKER_PATTERNS: RegExp[] = [
+  /captcha/i,
+  /verify (?:you are|that you are) human/i,
+  /are you a (?:human|robot)/i,
+  /confirm you are human/i,
+  /please enable javascript/i,
+  /enable javascript/i,
+  /js is required/i,
+  /javascript (?:is )?required/i,
+  /cloudflare/i,
+  /checking your browser/i,
+  /ddos protection/i,
+  /access denied/i,
+  /403 forbidden/i,
+  /log in to continue/i,
+  /please log in/i,
+  /subscribe to read/i,
+  /paywall/i,
+];
+
+/** Check if markdown content is essentially empty or a known blocker page. */
+function isBlockedOrEmpty(content: string): boolean {
+  const stripped = content.trim();
+  if (stripped.length === 0) return true;
+
+  // Very short content → almost certainly skeleton/empty
+  const wordCount = stripped
+    .split(/\s+/)
+    .filter((w) => w.length > 1).length;
+  if (wordCount < 15) return true;
+
+  // Blocker pattern match + not substantial
+  const hasBlocker = BLOCKER_PATTERNS.some((p) => p.test(content));
+  if (hasBlocker && wordCount < 80) return true;
+
+  return false;
+}
+
 export class HttpFetcher implements ContentFetcher {
   /**
    * Fetch a URL and convert HTML → Markdown.
@@ -24,6 +66,15 @@ export class HttpFetcher implements ContentFetcher {
     const result = convert(html);
     if (!result.content || result.content.trim().length === 0) {
       throw new Error("HTML to markdown conversion produced empty output");
+    }
+
+    // ── Content quality check ──────────────────────────────
+    if (isBlockedOrEmpty(result.content)) {
+      throw new Error(
+        "EMPTY_CONTENT: The page appears to be empty, a skeleton placeholder, " +
+          "or blocked (captcha/login/paywall). Try adding this content directly " +
+          "via right-click → \"Add this content into Knowledge base\" instead.",
+      );
     }
 
     return {
