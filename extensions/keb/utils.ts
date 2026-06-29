@@ -24,10 +24,7 @@ export function docNameFromFile(filePath: string): string {
  * Prefers the HTML metadata title if available, then falls back to
  * the last path segment, and finally the hostname.
  */
-export function docNameFromUrl(
-  url: string,
-  metadataTitle?: string | null,
-): string {
+export function docNameFromUrl(url: string, metadataTitle?: string | null): string {
   if (metadataTitle) {
     const slug = slugify(metadataTitle);
     if (slug.length > 0) return slug;
@@ -120,9 +117,7 @@ export function buildOkfFrontmatter(fields: Record<string, any>): string {
   for (const [key, value] of Object.entries(fields)) {
     if (value === undefined || value === null) continue;
     if (Array.isArray(value)) {
-      const items = value.map((v: any) =>
-        `"${String(v).replace(/"/g, '\\"')}"`,
-      );
+      const items = value.map((v: any) => `"${String(v).replace(/"/g, '\\"')}"`);
       lines.push(`${key}: [${items.join(", ")}]`);
     } else if (typeof value === "boolean") {
       lines.push(`${key}: ${value}`);
@@ -139,9 +134,10 @@ export function buildOkfFrontmatter(fields: Record<string, any>): string {
  * Returns the parsed key-value map and the body text (everything after frontmatter).
  * If no frontmatter is found, returns an empty map and the full input as body.
  */
-export function parseOkfFrontmatter(
-  raw: string,
-): { frontmatter: Record<string, any>; body: string } {
+export function parseOkfFrontmatter(raw: string): {
+  frontmatter: Record<string, any>;
+  body: string;
+} {
   const frontmatter: Record<string, any> = {};
   let body = raw;
 
@@ -164,9 +160,7 @@ export function parseOkfFrontmatter(
           value = value
             .slice(1, -1)
             .split(",")
-            .map((s: string) =>
-              s.trim().replace(/^["']|["']$/g, ""),
-            )
+            .map((s: string) => s.trim().replace(/^["']|["']$/g, ""))
             .filter(Boolean);
         } else if (value === "true") {
           value = true;
@@ -197,14 +191,10 @@ export function buildIndexContent(
   concepts: Array<{ slug: string; sources: string[] }>,
 ): string {
   const docLines =
-    summaries.length > 0
-      ? summaries.map((s) => `- [${s}](/summaries/${s}.md)`)
-      : ["(none)"];
+    summaries.length > 0 ? summaries.map((s) => `- [${s}](/summaries/${s}.md)`) : ["(none)"];
 
   const conceptLines =
-    concepts.length > 0
-      ? concepts.map((c) => `- [${c.slug}](/concepts/${c.slug}.md)`)
-      : ["(none)"];
+    concepts.length > 0 ? concepts.map((c) => `- [${c.slug}](/concepts/${c.slug}.md)`) : ["(none)"];
 
   return [
     "# Knowledge Base Index *(auto-rebuilt)*",

@@ -102,11 +102,7 @@ export interface KnowledgeBaseStore {
 
   // ── Source files ─────────────────────────────────────
   copySource(absPath: string, workspace?: string): CopyResult;
-  writeSourceContent(
-    filename: string,
-    content: string,
-    workspace?: string,
-  ): CopyResult;
+  writeSourceContent(filename: string, content: string, workspace?: string): CopyResult;
   readSource(destRel: string, workspace?: string): string;
   deleteSource(sourcePath: string, workspace?: string): boolean;
 
@@ -123,7 +119,7 @@ export interface KnowledgeBaseStore {
     originalName: string,
     addedAt: string,
     workspace?: string,
-    okfFields?: { title?: string; description?: string; resource?: string; tags?: string[] }
+    okfFields?: { title?: string; description?: string; resource?: string; tags?: string[] },
   ): void;
   deleteSummary(docName: string, workspace?: string): boolean;
 
@@ -136,7 +132,7 @@ export interface KnowledgeBaseStore {
     sources: string[],
     workspace?: string,
     needsReview?: boolean,
-    okfFields?: { title?: string; description?: string; tags?: string[] }
+    okfFields?: { title?: string; description?: string; tags?: string[] },
   ): void;
   deleteConcept(slug: string, workspace?: string): boolean;
 

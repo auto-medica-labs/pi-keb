@@ -27,10 +27,7 @@ function readRaw(
   workspace = "test-ws",
 ): string {
   const wp = store.getWorkspaceRoot(workspace);
-  return fs.readFileSync(
-    path.join(wp.wikiDir, dir, `${name}.md`),
-    "utf-8",
-  );
+  return fs.readFileSync(path.join(wp.wikiDir, dir, `${name}.md`), "utf-8");
 }
 
 function parseSources(content: string): string[] {
@@ -64,7 +61,9 @@ function teardown() {
 describe("writeSummary", () => {
   let store: FilesystemStore;
 
-  beforeEach(() => { store = setup(); });
+  beforeEach(() => {
+    store = setup();
+  });
   afterEach(() => teardown());
 
   it("writes OKF frontmatter for summaries", () => {
@@ -88,7 +87,7 @@ describe("writeSummary", () => {
     // OKF optional fields
     assert.ok(raw.includes('title: "Test Doc"'));
     assert.ok(raw.includes('description: "A test document"'));
-    assert.ok(raw.includes("tags: [\"test\", \"caching\"]"));
+    assert.ok(raw.includes('tags: ["test", "caching"]'));
 
     // No footers
     assert.ok(!raw.includes("**Concepts**"), "should NOT have Concepts footer");
@@ -116,7 +115,9 @@ describe("writeSummary", () => {
 describe("writeConcept", () => {
   let store: FilesystemStore;
 
-  beforeEach(() => { store = setup(); });
+  beforeEach(() => {
+    store = setup();
+  });
   afterEach(() => teardown());
 
   it("creates concept with OKF frontmatter", () => {
@@ -154,10 +155,7 @@ describe("writeConcept", () => {
 
     const raw = readRaw(store, "concepts", "error-handling");
     const sources = parseSources(raw);
-    assert.deepEqual(
-      sources.sort(),
-      ["summary/api-design", "summary/backend-bible"].sort(),
-    );
+    assert.deepEqual(sources.sort(), ["summary/api-design", "summary/backend-bible"].sort());
     assert.ok(raw.includes('title: "Error Handling"'));
     assert.ok(raw.includes('description: "Error patterns"'));
     assert.ok(raw.includes('tags: ["errors"]'));
@@ -180,16 +178,13 @@ describe("writeConcept", () => {
 describe("updateConcept (deterministic source merge)", () => {
   let store: FilesystemStore;
 
-  beforeEach(() => { store = setup(); });
+  beforeEach(() => {
+    store = setup();
+  });
   afterEach(() => teardown());
 
   // Simulates what keb_update_concept does:
-  function updateConcept(
-    slug: string,
-    body: string,
-    newSource: string,
-    workspace = "test-ws",
-  ) {
+  function updateConcept(slug: string, body: string, newSource: string, workspace = "test-ws") {
     const existing = store.readConcept(slug, workspace);
     if (!existing) throw new Error(`Concept "${slug}" does not exist`);
     const merged = [...new Set([...existing.sources, newSource])];
@@ -207,16 +202,9 @@ describe("updateConcept (deterministic source merge)", () => {
     );
 
     // Update: add a 3rd source
-    const merged = updateConcept(
-      "caching",
-      "## New body\nRedis + Memcached.",
-      "summary/doc-c",
-    );
+    const merged = updateConcept("caching", "## New body\nRedis + Memcached.", "summary/doc-c");
 
-    assert.deepEqual(
-      merged.sort(),
-      ["summary/doc-a", "summary/doc-b", "summary/doc-c"].sort(),
-    );
+    assert.deepEqual(merged.sort(), ["summary/doc-a", "summary/doc-b", "summary/doc-c"].sort());
 
     const raw = readRaw(store, "concepts", "caching");
     assert.ok(raw.includes("## New body"));
@@ -224,22 +212,14 @@ describe("updateConcept (deterministic source merge)", () => {
   });
 
   it("deduplicates identical source", () => {
-    store.writeConcept(
-      "dedup",
-      "## Original",
-      ["summary/x"],
-      "test-ws",
-    );
+    store.writeConcept("dedup", "## Original", ["summary/x"], "test-ws");
 
     const merged = updateConcept("dedup", "## Updated", "summary/x");
     assert.deepEqual(merged, ["summary/x"]);
   });
 
   it("throws when concept does not exist", () => {
-    assert.throws(
-      () => updateConcept("nonexistent", "## Body", "summary/x"),
-      /does not exist/,
-    );
+    assert.throws(() => updateConcept("nonexistent", "## Body", "summary/x"), /does not exist/);
   });
 
   it("preserves old sources regardless of what caller passes", () => {
@@ -255,11 +235,6 @@ describe("updateConcept (deterministic source merge)", () => {
     // the merge is computed from disk, so old sources survive.
     const merged = updateConcept("multi", "## Updated", "summary/d");
 
-    assert.deepEqual(
-      merged.sort(),
-      ["summary/a", "summary/b", "summary/c", "summary/d"].sort(),
-    );
+    assert.deepEqual(merged.sort(), ["summary/a", "summary/b", "summary/c", "summary/d"].sort());
   });
 });
-
-

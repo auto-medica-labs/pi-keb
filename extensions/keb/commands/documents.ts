@@ -15,11 +15,7 @@ import {
   isoNow,
   buildIndexContent,
 } from "../utils";
-import {
-  buildCompilePrompt,
-  buildCompilePromptInline,
-  buildRemovePrompt,
-} from "../prompts";
+import { buildCompilePrompt, buildCompilePromptInline, buildRemovePrompt } from "../prompts";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -38,10 +34,7 @@ export function registerDocumentCommands(
       "Add markdown files (via @) or URLs to the knowledge base. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       if (!args || !args.trim()) {
-        ctx.ui.notify(
-          "Usage: /keb:add @file.md | <url> [-w <workspace>]",
-          "warning",
-        );
+        ctx.ui.notify("Usage: /keb:add @file.md | <url> [-w <workspace>]", "warning");
         return;
       }
 
@@ -89,10 +82,7 @@ export function registerDocumentCommands(
       "Add inline text content to the knowledge base. The LLM will choose a docName. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       if (!args || !args.trim()) {
-        ctx.ui.notify(
-          "Usage: /keb:add:content <markdown text> [-w <workspace>] [-f]",
-          "warning",
-        );
+        ctx.ui.notify("Usage: /keb:add:content <markdown text> [-w <workspace>] [-f]", "warning");
         return;
       }
 
@@ -121,9 +111,7 @@ export function registerDocumentCommands(
             `Re-compiling${wsLabel}: inline content (previously added ${existing.addedAt.slice(0, 10)} but compilation was interrupted)`,
             "info",
           );
-          pi.sendUserMessage(
-            buildCompilePromptInline(existing.docName, content, workspace),
-          );
+          pi.sendUserMessage(buildCompilePromptInline(existing.docName, content, workspace));
           return;
         }
         ctx.ui.notify(
@@ -135,9 +123,7 @@ export function registerDocumentCommands(
 
       // Guard: only one pending compilation at a time
       if (store.countPendingCompilations(workspace) > 0) {
-        const pendingEntry = Object.values(reg).find(
-          (e) => !store.isEntryCompiled(e),
-        );
+        const pendingEntry = Object.values(reg).find((e) => !store.isEntryCompiled(e));
         const pendingName = pendingEntry ? pendingEntry.name : "unknown";
         if (!force) {
           const discard = await ctx.ui.confirm(
@@ -158,12 +144,7 @@ export function registerDocumentCommands(
       store.ensureKebDir(workspace);
 
       // Resolve doc-name collision (should be rare with inline- prefix but handle it)
-      const finalDocName = resolveDocNameCollision(
-        tempDocName,
-        workspace,
-        ctx,
-        store,
-      );
+      const finalDocName = resolveDocNameCollision(tempDocName, workspace, ctx, store);
       const finalFilename = `${finalDocName}.md`;
 
       // Write source
@@ -193,9 +174,7 @@ export function registerDocumentCommands(
         `Added${wsLabel}: inline content → ${finalFilename} (temp name — LLM will rename)`,
         "info",
       );
-      pi.sendUserMessage(
-        buildCompilePromptInline(finalDocName, content, workspace),
-      );
+      pi.sendUserMessage(buildCompilePromptInline(finalDocName, content, workspace));
     },
   });
 
@@ -207,26 +186,19 @@ export function registerDocumentCommands(
       const { workspace, yes, rest } = parseWorkspaceArgs(args);
 
       if (!store.kebExists(workspace)) {
-        const label = workspace
-          ? `Workspace "${workspace}"`
-          : "No knowledge base";
+        const label = workspace ? `Workspace "${workspace}"` : "No knowledge base";
         ctx.ui.notify(`${label} found.`, "warning");
         return;
       }
 
       if (!rest) {
-        ctx.ui.notify(
-          "Usage: /keb:remove <docName> [-w <workspace>] [-y]",
-          "warning",
-        );
+        ctx.ui.notify("Usage: /keb:remove <docName> [-w <workspace>] [-y]", "warning");
         return;
       }
 
       const docName = rest.trim();
       const reg = store.readRegistry(workspace);
-      const matches = Object.entries(reg).filter(
-        ([_, e]) => e.docName === docName,
-      );
+      const matches = Object.entries(reg).filter(([_, e]) => e.docName === docName);
 
       if (matches.length === 0) {
         ctx.ui.notify(
@@ -269,25 +241,16 @@ export function registerDocumentCommands(
 
       for (const slug of store.listConcepts(workspace)) {
         const concept = store.readConcept(slug, workspace);
-        if (!concept || !concept.sources.some((s) => sourceRefs.includes(s)))
-          continue;
+        if (!concept || !concept.sources.some((s) => sourceRefs.includes(s))) continue;
 
-        const remainingSources = concept.sources.filter(
-          (s) => !sourceRefs.includes(s),
-        );
+        const remainingSources = concept.sources.filter((s) => !sourceRefs.includes(s));
 
         if (remainingSources.length === 0) {
           // No sources left — delete the concept entirely
           store.deleteConcept(slug, workspace);
         } else {
           // Keep the body, update sources, set needs_review flag
-          store.writeConcept(
-            slug,
-            concept.body,
-            remainingSources,
-            workspace,
-            true,
-          );
+          store.writeConcept(slug, concept.body, remainingSources, workspace, true);
           affectedConceptSlugs.push(slug);
         }
       }
@@ -315,18 +278,10 @@ export function registerDocumentCommands(
           `${affectedConceptSlugs.length} concept(s) need body cleanup${wsLabel}. Sending to LLM...`,
           "info",
         );
-        const prompt = buildRemovePrompt(
-          docName,
-          entry.name,
-          affectedConceptSlugs,
-          workspace,
-        );
+        const prompt = buildRemovePrompt(docName, entry.name, affectedConceptSlugs, workspace);
         pi.sendUserMessage(prompt);
       } else {
-        ctx.ui.notify(
-          `Removal complete${wsLabel}: ${entry.name} (no concepts affected)`,
-          "info",
-        );
+        ctx.ui.notify(`Removal complete${wsLabel}: ${entry.name} (no concepts affected)`, "info");
       }
     },
   });
@@ -340,9 +295,7 @@ export function registerDocumentCommands(
       const { workspace, rest } = parseWorkspaceArgs(args);
 
       if (!store.kebExists(workspace)) {
-        const label = workspace
-          ? `Workspace "${workspace}"`
-          : "No knowledge base";
+        const label = workspace ? `Workspace "${workspace}"` : "No knowledge base";
         ctx.ui.notify(`${label} found.`, "warning");
         return;
       }
@@ -353,24 +306,16 @@ export function registerDocumentCommands(
       // Specific docName
       if (rest) {
         const docName = rest.trim();
-        const matches = Object.entries(reg).filter(
-          ([_, e]) => e.docName === docName,
-        );
+        const matches = Object.entries(reg).filter(([_, e]) => e.docName === docName);
 
         if (matches.length === 0) {
-          ctx.ui.notify(
-            `No document with slug "${docName}" found in registry.`,
-            "error",
-          );
+          ctx.ui.notify(`No document with slug "${docName}" found in registry.`, "error");
           return;
         }
 
         const [_, entry] = matches[0];
         if (store.isEntryCompiled(entry)) {
-          ctx.ui.notify(
-            `Document "${docName}" is already compiled.`,
-            "info",
-          );
+          ctx.ui.notify(`Document "${docName}" is already compiled.`, "info");
           return;
         }
 
@@ -379,15 +324,10 @@ export function registerDocumentCommands(
       }
 
       // All pending
-      const pending = Object.entries(reg).filter(
-        ([_, e]) => !store.isEntryCompiled(e),
-      );
+      const pending = Object.entries(reg).filter(([_, e]) => !store.isEntryCompiled(e));
 
       if (pending.length === 0) {
-        ctx.ui.notify(
-          `All documents are compiled${wsLabel}. Nothing to repair.`,
-          "info",
-        );
+        ctx.ui.notify(`All documents are compiled${wsLabel}. Nothing to repair.`, "info");
         return;
       }
 
@@ -432,12 +372,7 @@ async function handleUrlAdd(
         ctx.ui.notify(`Failed to read source: ${e.message}`, "error");
         return;
       }
-      const prompt2 = buildCompilePrompt(
-        existing.name,
-        existing.docName,
-        content2,
-        workspace,
-      );
+      const prompt2 = buildCompilePrompt(existing.name, existing.docName, content2, workspace);
       pi.sendUserMessage(prompt2);
       return;
     }
@@ -563,9 +498,7 @@ async function handleFileAdd(
         "info",
       );
       const content2 = fs.readFileSync(absPath, "utf-8");
-      pi.sendUserMessage(
-        buildCompilePrompt(existing.name, existing.docName, content2, workspace),
-      );
+      pi.sendUserMessage(buildCompilePrompt(existing.name, existing.docName, content2, workspace));
       return;
     }
     ctx.ui.notify(
@@ -647,26 +580,17 @@ function recompileEntry(
   try {
     content = store.readSource(entry.sourcePath, workspace);
   } catch (e: any) {
-    ctx.ui.notify(
-      `Failed to read source for "${entry.docName}": ${e.message}`,
-      "warning",
-    );
+    ctx.ui.notify(`Failed to read source for "${entry.docName}": ${e.message}`, "warning");
     return;
   }
 
   ctx.ui.notify(`Re-compiling${wsLabel}: ${entry.name}`, "info");
-  pi.sendUserMessage(
-    buildCompilePrompt(entry.name, entry.docName, content, workspace),
-  );
+  pi.sendUserMessage(buildCompilePrompt(entry.name, entry.docName, content, workspace));
 }
 
 /** Delete a pending entry from the registry and its source file. Used when the
  *  user chooses to discard a pending compilation to make room for a new add. */
-function discardPendingEntry(
-  workspace: string | undefined,
-  store: KnowledgeBaseStore,
-  ctx: any,
-) {
+function discardPendingEntry(workspace: string | undefined, store: KnowledgeBaseStore, ctx: any) {
   const reg = store.readRegistry(workspace);
   for (const [hash, entry] of Object.entries(reg)) {
     if (!store.isEntryCompiled(entry)) {
@@ -695,9 +619,6 @@ function resolveDocNameCollision(
     suffix++;
     candidate = `${base}-${suffix}`;
   }
-  ctx.ui.notify(
-    `Slug "${base}" already taken; using "${candidate}" instead.`,
-    "warning",
-  );
+  ctx.ui.notify(`Slug "${base}" already taken; using "${candidate}" instead.`, "warning");
   return candidate;
 }

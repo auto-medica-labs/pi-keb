@@ -288,9 +288,7 @@ export function buildRemovePrompt(
       ].join("\n")
     : `**Workspace:** default (no workspace param needed)`;
 
-  const slugList = affectedConceptSlugs
-    .map((s) => `- \`concepts/${s}.md\``)
-    .join("\n");
+  const slugList = affectedConceptSlugs.map((s) => `- \`concepts/${s}.md\``).join("\n");
 
   return [
     `[knowledge-base-remove-phase-2] The document "${sourceName}" (docName: ${docName}) was removed from the knowledge base.`,

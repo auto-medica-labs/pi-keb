@@ -40,9 +40,7 @@ function isBlockedOrEmpty(content: string): boolean {
   if (stripped.length === 0) return true;
 
   // Very short content → almost certainly skeleton/empty
-  const wordCount = stripped
-    .split(/\s+/)
-    .filter((w) => w.length > 1).length;
+  const wordCount = stripped.split(/\s+/).filter((w) => w.length > 1).length;
   if (wordCount < 15) return true;
 
   // Blocker pattern match + not substantial
@@ -73,7 +71,7 @@ export class HttpFetcher implements ContentFetcher {
       throw new Error(
         "EMPTY_CONTENT: The page appears to be empty, a skeleton placeholder, " +
           "or blocked (captcha/login/paywall). Try adding this content directly " +
-          "via right-click → \"Add this content into Knowledge base\" instead.",
+          'via right-click → "Add this content into Knowledge base" instead.',
       );
     }
 
@@ -116,19 +114,12 @@ function httpGet(targetUrl: string, maxRedirects = 5): Promise<string> {
               return;
             }
             res.resume();
-            doGet(
-              new URL(res.headers.location, urlStr).toString(),
-              redirectsLeft - 1,
-            );
+            doGet(new URL(res.headers.location, urlStr).toString(), redirectsLeft - 1);
             return;
           }
 
           if (!res.statusCode || res.statusCode >= 400) {
-            reject(
-              new Error(
-                `HTTP ${res.statusCode}: ${res.statusMessage || "error"}`,
-              ),
-            );
+            reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage || "error"}`));
             res.resume();
             return;
           }

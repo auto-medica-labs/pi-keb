@@ -36,8 +36,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
   // ── Paths ───────────────────────────────────────────────
 
   getWorkspaceRoot(name?: string): WorkspacePaths {
-    const base =
-      name && name !== "default" ? path.join(WORKSPACES_DIR, name) : KebRoot;
+    const base = name && name !== "default" ? path.join(WORKSPACES_DIR, name) : KebRoot;
 
     return {
       root: base,
@@ -149,11 +148,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
 
   writeRegistry(registry: Registry, workspace?: string): void {
     const wp = this.getWorkspaceRoot(workspace);
-    fs.writeFileSync(
-      wp.registryPath,
-      JSON.stringify(registry, null, 2),
-      "utf-8",
-    );
+    fs.writeFileSync(wp.registryPath, JSON.stringify(registry, null, 2), "utf-8");
   }
 
   isDocNameUsed(docName: string, workspace?: string): boolean {
@@ -183,19 +178,13 @@ export class FilesystemStore implements KnowledgeBaseStore {
   isUrlInRegistry(url: string, workspace?: string): boolean {
     const normalized = this.normalizeUrl(url);
     const reg = this.readRegistry(workspace);
-    return Object.values(reg).some(
-      (e) => this.normalizeUrl(e.originalPath) === normalized,
-    );
+    return Object.values(reg).some((e) => this.normalizeUrl(e.originalPath) === normalized);
   }
 
   findByUrl(url: string, workspace?: string): RegistryEntry | null {
     const normalized = this.normalizeUrl(url);
     const reg = this.readRegistry(workspace);
-    return (
-      Object.values(reg).find(
-        (e) => this.normalizeUrl(e.originalPath) === normalized,
-      ) ?? null
-    );
+    return Object.values(reg).find((e) => this.normalizeUrl(e.originalPath) === normalized) ?? null;
   }
 
   // ── Source files ────────────────────────────────────────
@@ -214,17 +203,11 @@ export class FilesystemStore implements KnowledgeBaseStore {
     return { destRel: `source/${name}`, destAbs };
   }
 
-  writeSourceContent(
-    filename: string,
-    content: string,
-    workspace?: string,
-  ): CopyResult {
+  writeSourceContent(filename: string, content: string, workspace?: string): CopyResult {
     const wp = this.getWorkspaceRoot(workspace);
     const destAbs = path.join(wp.sourceDir, filename);
     if (fs.existsSync(destAbs)) {
-      throw new Error(
-        `A file named "${filename}" already exists in the Keb source/ directory.`,
-      );
+      throw new Error(`A file named "${filename}" already exists in the Keb source/ directory.`);
     }
     fs.writeFileSync(destAbs, content, "utf-8");
     return { destRel: `source/${filename}`, destAbs };
@@ -281,7 +264,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     originalName: string,
     addedAt: string,
     workspace?: string,
-    okfFields?: { title?: string; description?: string; resource?: string; tags?: string[] }
+    okfFields?: { title?: string; description?: string; resource?: string; tags?: string[] },
   ): void {
     const wp = this.getWorkspaceRoot(workspace);
     fs.mkdirSync(wp.summariesDir, { recursive: true });
@@ -299,11 +282,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
 
     const frontmatter = buildOkfFrontmatter(fields);
     const full = frontmatter + "\n\n" + content + "\n";
-    fs.writeFileSync(
-      path.join(wp.summariesDir, `${docName}.md`),
-      full,
-      "utf-8",
-    );
+    fs.writeFileSync(path.join(wp.summariesDir, `${docName}.md`), full, "utf-8");
   }
 
   deleteSummary(docName: string, workspace?: string): boolean {
@@ -349,7 +328,7 @@ export class FilesystemStore implements KnowledgeBaseStore {
     sources: string[],
     workspace?: string,
     needsReview?: boolean,
-    okfFields?: { title?: string; description?: string; tags?: string[] }
+    okfFields?: { title?: string; description?: string; tags?: string[] },
   ): void {
     const wp = this.getWorkspaceRoot(workspace);
     fs.mkdirSync(wp.conceptsDir, { recursive: true });
@@ -412,5 +391,3 @@ export class FilesystemStore implements KnowledgeBaseStore {
     };
   }
 }
-
-

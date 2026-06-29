@@ -290,12 +290,12 @@ important limitations.
 
 ### How headless mode differs
 
-| Feature | Interactive (TUI) | Headless (RPC) |
-| --- | --- | --- |
-| `ctx.ui.confirm()` | Dialog in terminal, user responds | Emits `extension_ui_request`, **blocks** waiting for stdin response |
-| `ctx.ui.notify()` | Inline status in terminal | Emits `extension_ui_request` (fire-and-forget) |
-| Interrupted compilation | User can `/keb:repair` from session | Bridge detects `compiled: false` in registry, re-compiles |
-| Session persistence | Full session saved, resumable | `--no-session` — ephemeral, no resume |
+| Feature                 | Interactive (TUI)                   | Headless (RPC)                                                      |
+| ----------------------- | ----------------------------------- | ------------------------------------------------------------------- |
+| `ctx.ui.confirm()`      | Dialog in terminal, user responds   | Emits `extension_ui_request`, **blocks** waiting for stdin response |
+| `ctx.ui.notify()`       | Inline status in terminal           | Emits `extension_ui_request` (fire-and-forget)                      |
+| Interrupted compilation | User can `/keb:repair` from session | Bridge detects `compiled: false` in registry, re-compiles           |
+| Session persistence     | Full session saved, resumable       | `--no-session` — ephemeral, no resume                               |
 
 ### Confirmation dialogs will hang
 

@@ -8,10 +8,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { KnowledgeBaseStore } from "../ports/types";
 import { slugify, parseWorkspaceArgs } from "../utils";
 
-export function registerWorkspaceCommands(
-  pi: ExtensionAPI,
-  store: KnowledgeBaseStore,
-) {
+export function registerWorkspaceCommands(pi: ExtensionAPI, store: KnowledgeBaseStore) {
   // ── /keb:workspace:init <workspace-name> ──────────────────────────────
   pi.registerCommand("keb:workspace:init", {
     description:
@@ -29,10 +26,7 @@ export function registerWorkspaceCommands(
 
       const name = slugify(args.trim());
       if (!name) {
-        ctx.ui.notify(
-          "Invalid workspace name. Use letters, numbers, hyphens.",
-          "error",
-        );
+        ctx.ui.notify("Invalid workspace name. Use letters, numbers, hyphens.", "error");
         return;
       }
 
@@ -82,9 +76,7 @@ export function registerWorkspaceCommands(
       const named = store.listWorkspaces();
       if (named.length === 0) {
         lines.push("");
-        lines.push(
-          "No named workspaces. Use /keb:workspace:init <name> to create one.",
-        );
+        lines.push("No named workspaces. Use /keb:workspace:init <name> to create one.");
       } else {
         lines.push("");
         for (const ws of named) {
@@ -127,21 +119,12 @@ export function registerWorkspaceCommands(
       const wsParam = outerName === "default" ? undefined : outerName;
 
       if (!store.workspaceExists(outerName)) {
-        const label =
-          outerName === "default"
-            ? "Default workspace"
-            : `Workspace "${outerName}"`;
-        ctx.ui.notify(
-          `${label} does not exist or has not been initialized.`,
-          "error",
-        );
+        const label = outerName === "default" ? "Default workspace" : `Workspace "${outerName}"`;
+        ctx.ui.notify(`${label} does not exist or has not been initialized.`, "error");
         return;
       }
 
-      const label =
-        outerName === "default"
-          ? "the default workspace"
-          : `workspace "${outerName}"`;
+      const label = outerName === "default" ? "the default workspace" : `workspace "${outerName}"`;
 
       if (!yes) {
         const confirmed = await ctx.ui.confirm(
@@ -158,15 +141,9 @@ export function registerWorkspaceCommands(
 
       try {
         const clearedPath = store.clearWorkspace(wsParam);
-        ctx.ui.notify(
-          `Workspace cleared: ${outerName}\n  Path: ${clearedPath}`,
-          "info",
-        );
+        ctx.ui.notify(`Workspace cleared: ${outerName}\n  Path: ${clearedPath}`, "info");
       } catch (e: any) {
-        ctx.ui.notify(
-          `Failed to clear workspace "${outerName}": ${e.message}`,
-          "error",
-        );
+        ctx.ui.notify(`Failed to clear workspace "${outerName}": ${e.message}`, "error");
       }
     },
   });
@@ -203,10 +180,7 @@ export function registerWorkspaceCommands(
       }
 
       if (!store.workspaceExists(name)) {
-        ctx.ui.notify(
-          `Workspace "${name}" does not exist or has not been initialized.`,
-          "error",
-        );
+        ctx.ui.notify(`Workspace "${name}" does not exist or has not been initialized.`, "error");
         return;
       }
 
@@ -224,15 +198,9 @@ export function registerWorkspaceCommands(
 
       try {
         const removedPath = store.deleteWorkspace(name);
-        ctx.ui.notify(
-          `Workspace deleted: ${name}\n  Path: ${removedPath}`,
-          "info",
-        );
+        ctx.ui.notify(`Workspace deleted: ${name}\n  Path: ${removedPath}`, "info");
       } catch (e: any) {
-        ctx.ui.notify(
-          `Failed to delete workspace "${name}": ${e.message}`,
-          "error",
-        );
+        ctx.ui.notify(`Failed to delete workspace "${name}": ${e.message}`, "error");
       }
     },
   });

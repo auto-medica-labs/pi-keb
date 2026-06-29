@@ -40,10 +40,7 @@ function parseIndexBriefs(indexContent: string): Map<string, string> {
   return briefs;
 }
 
-export function registerTools(
-  pi: ExtensionAPI,
-  store: KnowledgeBaseStore,
-) {
+export function registerTools(pi: ExtensionAPI, store: KnowledgeBaseStore) {
   // ── keb_read_index ────────────────────────────────────────
   pi.registerTool({
     name: "keb_read_index",
@@ -51,14 +48,11 @@ export function registerTools(
     description:
       "Read the knowledge base index.md file. Shows all documents and concepts with brief descriptions.",
     parameters: Type.Object({
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       const content =
-        store.readIndex(params.workspace) ||
-        "(index is empty — no documents or concepts yet)";
+        store.readIndex(params.workspace) || "(index is empty — no documents or concepts yet)";
       return {
         content: [{ type: "text" as const, text: content }],
         details: {},
@@ -72,16 +66,11 @@ export function registerTools(
     label: "List Keb Concepts",
     description: "List all concept slugs in the knowledge base.",
     parameters: Type.Object({
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       const slugs = store.listConcepts(params.workspace);
-      const text =
-        slugs.length > 0
-          ? slugs.map((s) => `- ${s}`).join("\n")
-          : "(no concepts yet)";
+      const text = slugs.length > 0 ? slugs.map((s) => `- ${s}`).join("\n") : "(no concepts yet)";
       return {
         content: [{ type: "text" as const, text }],
         details: {},
@@ -97,9 +86,7 @@ export function registerTools(
       "List all tags used across the knowledge base, grouped by the documents that use each tag. " +
       "Call this before writing to see existing tags and reuse them for consistency.",
     parameters: Type.Object({
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       // Scan summaries for tags
@@ -156,9 +143,7 @@ export function registerTools(
       slug: Type.String({
         description: "Concept slug (e.g. 'caching-strategy')",
       }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       const info = store.readConcept(params.slug, params.workspace);
@@ -197,9 +182,7 @@ export function registerTools(
       docName: Type.String({
         description: "Document name slug (e.g. 'architecture')",
       }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       const text = store.readSummary(params.docName, params.workspace);
@@ -239,17 +222,14 @@ export function registerTools(
       content: Type.String({
         description: "Full markdown summary (200-400 words)",
       }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
-      title: Type.Optional(
-        Type.String({ description: "Optional display title for the summary" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
+      title: Type.Optional(Type.String({ description: "Optional display title for the summary" })),
       description: Type.Optional(
         Type.String({ description: "Optional one-line description for the index" }),
       ),
       tags: Type.Array(Type.String(), {
-        description: "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
+        description:
+          "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
       }),
     }),
     async execute(_toolCallId, params) {
@@ -267,33 +247,23 @@ export function registerTools(
       }
 
       const reg = store.readRegistry(params.workspace);
-      const entry = Object.values(reg).find(
-        (e) => e.docName === params.docName,
-      );
+      const entry = Object.values(reg).find((e) => e.docName === params.docName);
       const originalName = entry?.name ?? `${params.docName}.md`;
       const addedAt = entry?.addedAt ?? isoNow();
 
       // Populate OKF resource field when the source is an HTTP(S) URL
       const resource =
         entry?.originalPath &&
-        (entry.originalPath.startsWith("http://") ||
-          entry.originalPath.startsWith("https://"))
+        (entry.originalPath.startsWith("http://") || entry.originalPath.startsWith("https://"))
           ? entry.originalPath
           : undefined;
 
-      store.writeSummary(
-        params.docName,
-        params.content,
-        originalName,
-        addedAt,
-        params.workspace,
-        {
-          title: params.title,
-          description: params.description,
-          resource,
-          tags: params.tags,
-        },
-      );
+      store.writeSummary(params.docName, params.content, originalName, addedAt, params.workspace, {
+        title: params.title,
+        description: params.description,
+        resource,
+        tags: params.tags,
+      });
 
       return {
         content: [
@@ -324,34 +294,24 @@ export function registerTools(
         description:
           "List of summary page references (e.g. ['summary/architecture', 'summary/design'])",
       }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
-      title: Type.Optional(
-        Type.String({ description: "Optional display title for the concept" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
+      title: Type.Optional(Type.String({ description: "Optional display title for the concept" })),
       description: Type.Optional(
         Type.String({ description: "Optional one-line description for the index" }),
       ),
       tags: Type.Array(Type.String(), {
-        description: "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
+        description:
+          "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
       }),
     }),
     async execute(_toolCallId, params) {
       const existed = store.listConcepts(params.workspace).includes(params.slug);
 
-      store.writeConcept(
-        params.slug,
-        params.content,
-        params.sources,
-        params.workspace,
-        undefined,
-        {
-          title: params.title,
-          description: params.description,
-          tags: params.tags,
-        },
-      );
+      store.writeConcept(params.slug, params.content, params.sources, params.workspace, undefined, {
+        title: params.title,
+        description: params.description,
+        tags: params.tags,
+      });
       const action = existed ? "updated" : "created";
       return {
         content: [
@@ -380,20 +340,16 @@ export function registerTools(
         description: "Full rewritten markdown body with new info integrated",
       }),
       source: Type.String({
-        description:
-          "Single summary ref to add, e.g. 'summary/architecture'",
+        description: "Single summary ref to add, e.g. 'summary/architecture'",
       }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
-      title: Type.Optional(
-        Type.String({ description: "Optional display title for the concept" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
+      title: Type.Optional(Type.String({ description: "Optional display title for the concept" })),
       description: Type.Optional(
         Type.String({ description: "Optional one-line description for the index" }),
       ),
       tags: Type.Array(Type.String(), {
-        description: "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
+        description:
+          "Tags for categorization (call keb_list_tags first to see existing tags and reuse them)",
       }),
     }),
     async execute(_toolCallId, params) {
@@ -459,11 +415,12 @@ export function registerTools(
             description: "One-liner description (under 120 chars)",
           }),
         }),
-        { description: "Entries you want to UPDATE with fresh briefs. Omitted pages keep existing briefs." },
+        {
+          description:
+            "Entries you want to UPDATE with fresh briefs. Omitted pages keep existing briefs.",
+        },
       ),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       const diskSummarySlugs = store.listSummaries(params.workspace);
@@ -495,9 +452,7 @@ export function registerTools(
 
       for (const slug of diskConceptSlugs) {
         const concept = store.readConcept(slug, params.workspace);
-        const sourcesFallback = concept
-          ? `sources: ${concept.sources.join(", ")}`
-          : "(concept)";
+        const sourcesFallback = concept ? `sources: ${concept.sources.join(", ")}` : "(concept)";
         const brief = resolveBrief("concept", slug, sourcesFallback);
         conceptLines.push(`- [${slug}](/concepts/${slug}.md) — ${brief}`);
       }
@@ -521,10 +476,7 @@ export function registerTools(
       const now = isoNow();
       for (const slug of diskSummarySlugs) {
         for (const [, regEntry] of Object.entries(reg)) {
-          if (
-            regEntry.docName === slug &&
-            !store.isEntryCompiled(regEntry)
-          ) {
+          if (regEntry.docName === slug && !store.isEntryCompiled(regEntry)) {
             regEntry.compiled = true;
             regEntry.lastCompiledAt = now;
             markedCount++;
@@ -560,17 +512,13 @@ export function registerTools(
       newDocName: Type.String({
         description: "New meaningful slug (lowercase, hyphens, 4 words max)",
       }),
-      workspace: Type.Optional(
-        Type.String({ description: "Workspace name (omit for default)" }),
-      ),
+      workspace: Type.Optional(Type.String({ description: "Workspace name (omit for default)" })),
     }),
     async execute(_toolCallId, params) {
       const reg = store.readRegistry(params.workspace);
 
       // Find the entry with this docName
-      const match = Object.entries(reg).find(
-        ([_, e]) => e.docName === params.oldDocName,
-      );
+      const match = Object.entries(reg).find(([_, e]) => e.docName === params.oldDocName);
       if (!match) {
         return {
           content: [

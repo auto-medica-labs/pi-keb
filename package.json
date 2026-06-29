@@ -3,34 +3,34 @@
   "version": "0.1.0",
   "description": "A pi-native knowledge base extension — compile markdown documents into a structured, interlinked wiki using your LLM (pi-keb)",
   "keywords": [
-    "pi-package",
     "knowledge-base",
-    "wiki",
-    "llm"
+    "llm",
+    "pi-package",
+    "wiki"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/auto-medica-labs/pi-keb"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "pi": {
-    "extensions": [
-      "./extensions/keb"
-    ]
-  },
   "dependencies": {
     "@kreuzberg/html-to-markdown-node": "^3.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
     "@earendil-works/pi-coding-agent": "*",
     "typebox": "*"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/auto-medica-labs/pi-keb"
-  },
-  "devDependencies": {
-    "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+  "pi": {
+    "extensions": [
+      "./extensions/keb"
+    ]
   }
 }

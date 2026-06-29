@@ -9,21 +9,15 @@ import type { KnowledgeBaseStore } from "../ports/types";
 import { parseWorkspaceArgs } from "../utils";
 import { buildQueryPrompt } from "../prompts";
 
-export function registerQueryCommands(
-  pi: ExtensionAPI,
-  store: KnowledgeBaseStore,
-) {
+export function registerQueryCommands(pi: ExtensionAPI, store: KnowledgeBaseStore) {
   // ── /keb:query <question> [-w <workspace>] ────────────────
   pi.registerCommand("keb:query", {
-    description:
-      "Ask a question against the knowledge base. Use -w <name> for a named workspace.",
+    description: "Ask a question against the knowledge base. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       const { workspace, rest } = parseWorkspaceArgs(args);
 
       if (!store.kebExists(workspace)) {
-        const label = workspace
-          ? `Workspace "${workspace}"`
-          : "No knowledge base";
+        const label = workspace ? `Workspace "${workspace}"` : "No knowledge base";
         ctx.ui.notify(
           `${label} found. Use /keb:workspace:init${workspace ? ` ${workspace}` : ""} first, or /keb:add to populate.`,
           "warning",
@@ -32,10 +26,7 @@ export function registerQueryCommands(
       }
 
       if (!rest) {
-        ctx.ui.notify(
-          "Usage: /keb:query <question> [-w <workspace>]",
-          "warning",
-        );
+        ctx.ui.notify("Usage: /keb:query <question> [-w <workspace>]", "warning");
         return;
       }
 
@@ -51,9 +42,7 @@ export function registerQueryCommands(
       const { workspace } = parseWorkspaceArgs(args);
 
       if (!store.kebExists(workspace)) {
-        const label = workspace
-          ? `Workspace "${workspace}"`
-          : "No knowledge base";
+        const label = workspace ? `Workspace "${workspace}"` : "No knowledge base";
         ctx.ui.notify(`${label} found.`, "info");
         return;
       }
@@ -77,11 +66,8 @@ export function registerQueryCommands(
             const entry = Object.values(reg).find((e) => e.docName === name);
             const source = entry ? entry.name : "?";
             const added = entry ? entry.addedAt.slice(0, 10) : "?";
-            const pending =
-              entry && !store.isEntryCompiled(entry) ? " ⚠[pending]" : "";
-            lines.push(
-              `  - \`summary/${name}\` (source: ${source}, added: ${added})${pending}`,
-            );
+            const pending = entry && !store.isEntryCompiled(entry) ? " ⚠[pending]" : "";
+            lines.push(`  - \`summary/${name}\` (source: ${source}, added: ${added})${pending}`);
           }
           lines.push("");
         }
@@ -102,15 +88,12 @@ export function registerQueryCommands(
 
   // ── /keb:status [-w <workspace>] ──────────────────────────
   pi.registerCommand("keb:status", {
-    description:
-      "Show knowledge base statistics. Use -w <name> for a named workspace.",
+    description: "Show knowledge base statistics. Use -w <name> for a named workspace.",
     handler: async (args, ctx) => {
       const { workspace } = parseWorkspaceArgs(args);
 
       if (!store.kebExists(workspace)) {
-        const label = workspace
-          ? `Workspace "${workspace}"`
-          : "No knowledge base";
+        const label = workspace ? `Workspace "${workspace}"` : "No knowledge base";
         ctx.ui.notify(`${label} found.`, "info");
         return;
       }
@@ -122,8 +105,7 @@ export function registerQueryCommands(
       const wsLabel = workspace ? ` [${workspace}]` : "";
 
       const lastEntry = Object.values(reg).sort(
-        (a, b) =>
-          new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+        (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
       )[0];
 
       const rootPath = workspace
